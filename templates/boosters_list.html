@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block title %}陪玩店排名 | GameBuddy{% endblock %}
+
+{% block head_extra %}
+<style>
+    .quick-filter-form {
+        display: grid;
+        gap: 14px;
+        margin-top: 10px;
+    }
+
+    .quick-filter-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .quick-filter-field label {
+        display: block;
+        margin-bottom: 6px;
+        color: #344256;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+
+    .quick-filter-field select {
+        width: 100%;
+        min-height: 42px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: #111827;
+        padding: 0 12px;
+        font-weight: 700;
+    }
+
+    @media (max-width: 820px) {
+        .quick-filter-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block page_sidebar %}
+<div class="sidebar-block">
+    {% set game_icon_map = {
+        '英雄联盟': 'lol.png',
+        '无畏契约': 'valorant.png',
+        '金铲铲': 'tft.png',
+        '王者荣耀': 'hok.png',
+        'CS': 'cs2.png',
+        '绝地求生': 'pubg.png',
+        '三角洲行动': 'delta-force.png'
+    } %}
+    <div class="sidebar-group">
+        <div class="sidebar-title">导航</div>
+        <a class="sidebar-link" href="{{ url_for('home') }}">返回精选页</a>
+        <a class="sidebar-link {% if filters.sort in ['', 'recommended'] and not filters.game %}is-active{% endif %}" href="{{ url_for('boosters_list') }}">全部陪玩店</a>
+        <a class="sidebar-link {% if filters.sort == 'rating_desc' %}is-active{% endif %}" href="{{ url_for('boosters_list', sort='rating_desc') }}">高评分优先</a>
+        <a class="sidebar-link {% if filters.sort == 'price_asc' %}is-active{% endif %}" href="{{ url_for('boosters_list', sort='price_asc') }}">价格友好</a>
+    </div>
+    <div class="sidebar-group">
+        <div class="sidebar-title">热门游戏</div>
+        {% for game in discovery_games[:7] %}
+            {% if game.slug %}
+                {% set icon_file = game_icon_map.get(game.slug) %}
+                <a class="sidebar-chip {% if filters.game and filters.game in game.slug %}is-active{% endif %}" href="{{ url_for('boosters_list', game=game.slug) }}">
+                    {% if icon_file %}
+                        <span class="sidebar-game-icon-wrap">
+                            <img class="sidebar-game-icon" src="{{ url_for('static', filename='images/games/' ~ icon_file, v=games_icons_version) }}" alt="" loading="lazy" decoding="async">
+                        </span>
+                    {% else %}
+                        <span class="sidebar-game-icon-wrap">{{ game.icon }}</span>
+                    {% endif %}
+                    {{ game.name }}
+                </a>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="surface">
+    <div class="section-title">
+        {% if filters.sort == 'rating_desc' %}
+            <h2>高评分陪玩店排名</h2>
+            <span class="muted">按评分从高到低排序</span>
+        {% elif filters.sort == 'price_asc' %}
+            <h2>价格友好陪玩店排名</h2>
+            <span class="muted">按起步价从低到高排序</span>
+        {% elif filters.game %}
+            <h2>{{ filters.game }}陪玩店排名</h2>
+            <span class="muted">{{ stores|length }} 家可选店铺</span>
+        {% else %}
+            <h2>全部陪玩店排名</h2>
+            <span class="muted">{{ stores|length }} 家可选店铺</span>
+        {% endif %}
+    </div>
+    {% set game_options = [
+        {'label': '全部游戏', 'value': ''},
+        {'label': '英雄联盟', 'value': '英雄联盟'},
+        {'label': '无畏契约', 'value': '无畏契约'},
+        {'label': '金铲铲之战', 'value': '金铲铲'},
+        {'label': '王者荣耀', 'value': '王者荣耀'},
+        {'label': 'CS2', 'value': 'CS'},
+        {'label': '绝地求生', 'value': '绝地求生'},
+        {'label': '三角洲行动', 'value': '三角洲行动'}
+    ] %}
+    {% set current_min_price = (filters.min_price or price_min)|int %}
+    {% set current_max_price = (filters.max_price or price_max)|int %}
+    <form method="get" class="quick-filter-form">
+        <div class="quick-filter-row">
+            <div class="quick-filter-field">
+                <label for="list_game">游戏</label>
+                <select id="list_game" name="game">
+                    {% for game in game_options %}
+                        <option value="{{ game.value }}" {% if filters.game == game.value %}selected{% endif %}>{{ game.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="quick-filter-field">
+                <label for="list_sort">排序</label>
+                <select id="list_sort" name="sort">
+                    <option value="recommended" {% if filters.sort == 'recommended' %}selected{% endif %}>推荐优先</option>
+                    <option value="rating_desc" {% if filters.sort == 'rating_desc' %}selected{% endif %}>评分优先</option>
+                    <option value="price_asc" {% if filters.sort == 'price_asc' %}selected{% endif %}>价格从低到高</option>
+                </select>
+            </div>
+        </div>
+        <div class="quick-filter-field">
+            <label>价格区间</label>
+            {% set range_note_prefix = '站内最低至最高' %}
+            {% include '_price_range_filter.html' %}
+        </div>
+        <div class="button-row">
+            <button type="submit">开始匹配</button>
+            <a class="button-link secondary" href="{{ url_for('boosters_list') }}">重置</a>
+        </div>
+    </form>
+    {% if stores %}
+        <div class="market-grid">
+            {% for store in stores %}
+                <article class="market-card">
+                    <div class="market-cover theme-{{ store.theme }}{% if store.cover_url %} has-image{% endif %}" {% if store.cover_url %}style="background-image: linear-gradient(180deg, rgba(12, 14, 18, 0.12), rgba(12, 14, 18, 0.78)), url('{{ store.cover_url }}'); background-size: cover; background-position: center;"{% endif %}>
+                        <div class="market-cover-content">
+                            <div class="eyebrow" style="background: rgba(18,20,24,0.18); color: #fff;">{{ (store.tagline or store.hero_text or '接待大厅统一派单')|truncate(28, True, '...') }}</div>
+                            <div class="market-cover-title">{{ store.name }}</div>
+                            <div class="market-cover-sub">{{ store.games_text or '多游戏接单' }}</div>
+                        </div>
+                        <span class="market-cover-sheen" aria-hidden="true"></span>
+                        <div class="market-cover-badge">{{ store.badge or '接待大厅' }}</div>
+                    </div>
+                    <div class="market-body">
+                        <div class="avatar-row">
+                            {% if store.logo_url %}
+                                <img class="avatar-photo square" src="{{ store.logo_url }}" alt="{{ store.name }}">
+                            {% else %}
+                                <div class="avatar-badge">{{ store.logo_text }}</div>
+                            {% endif %}
+                            <div>
+                                <h3>{{ store.name }}</h3>
+                                <p>{{ store.games_text or '多游戏接单' }} · {{ store.price_text }}</p>
+                            </div>
+                        </div>
+                        <div class="market-meta">
+                            <span class="chip is-active">评分 {{ store.avg_rating or '新店' }}</span>
+                            <span class="chip">{{ store.booster_count }} 位陪玩</span>
+                            <span class="chip">完成 {{ store.completed_orders }} 单</span>
+                            <span class="chip">{{ store.price_text }}</span>
+                        </div>
+                        <div class="market-desc">
+                            <p>{{ store.description or store.tagline or '支持接待大厅统一排单。' }}</p>
+                        </div>
+                        {% if store.boosters %}
+                            <div class="market-roster" title="{% for booster in store.boosters[:4] %}{{ booster.display_name }}{% if not loop.last %} / {% endif %}{% endfor %}">
+                                招牌陪玩：{% for booster in store.boosters[:3] %}{{ booster.display_name }}{% if not loop.last %} / {% endif %}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="market-foot">
+                            <span>{{ store.contact_note or '接待大厅在线 / 统一派单' }}</span>
+                            <a class="button-link secondary" href="{{ url_for('store_detail', store_slug=store.slug) }}">查看店铺</a>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">没有找到符合条件的店铺，换个关键词再试试。</div>
+    {% endif %}
+</section>
+{% endblock %}

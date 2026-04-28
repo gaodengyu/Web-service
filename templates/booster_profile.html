@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}陪玩师资料管理 | GameBuddy{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">Profile Setup</span>
+        <h1>资料越完整，越容易被推荐到前面</h1>
+        <p>把游戏、段位、价格、在线时段、服务风格和介绍写清楚，能明显提升下单效率。</p>
+        <div class="kpi-row">
+            <span class="kpi-pill">当前完成度 {{ completion }}%</span>
+        </div>
+    </div>
+</section>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>编辑陪玩师资料</h2>
+    </div>
+    <form method="post" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="form-grid two">
+            <div>
+                <label for="games">服务游戏</label>
+                <input id="games" name="games" value="{{ profile.games }}" placeholder="例如：英雄联盟、王者荣耀">
+            </div>
+            <div>
+                <label for="rank">段位</label>
+                <input id="rank" name="rank" value="{{ profile.rank }}" placeholder="例如：钻石、宗师、王者">
+            </div>
+        </div>
+        <div class="form-grid two">
+            <div>
+                <label for="price">价格</label>
+                <input id="price" name="price" value="{{ profile.price }}" placeholder="例如：50">
+            </div>
+            <div>
+                <label for="available_time">可服务时间</label>
+                <input id="available_time" name="available_time" value="{{ profile.available_time }}" placeholder="例如：每天 19:00 - 23:00">
+            </div>
+        </div>
+        <div>
+            <label for="play_style">服务风格</label>
+            <input id="play_style" name="play_style" value="{{ profile.play_style }}" placeholder="例如：耐心教学、稳健上分、语音沟通">
+        </div>
+        <div>
+            <label for="intro">个人介绍</label>
+            <textarea id="intro" name="intro" placeholder="介绍你的擅长英雄、玩法偏好和服务特点">{{ profile.intro }}</textarea>
+        </div>
+        <div class="button-row">
+            <button type="submit">保存资料</button>
+            <a class="button-link secondary" href="{{ url_for('booster_home') }}">返回陪玩师面板</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

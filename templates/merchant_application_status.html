@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}申请进度查询 | GameBuddy{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">Application Review</span>
+        <h1>查询商家/陪玩师审核进度</h1>
+        <p>优先使用用户名/ID + 密码查询；若历史商家申请绑定过邮箱，也可使用用户名 + 邮箱查询。</p>
+    </div>
+</section>
+
+<section class="surface" style="margin-top: 18px;">
+    <form method="post" class="panel-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label>
+            用户名 / ID
+            <input name="username" value="{{ form_state.username }}" placeholder="注册时填写的用户名或ID" required>
+        </label>
+        <label>
+            密码
+            <input type="password" name="password" placeholder="优先使用用户名+密码查询">
+        </label>
+        <label>
+            邮箱（兼容旧流程）
+            <input type="email" name="email" value="{{ form_state.email }}" placeholder="可选：用户名+邮箱查询">
+        </label>
+        <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end;">
+            <button type="submit">查询进度</button>
+        </div>
+    </form>
+</section>
+
+{% if application %}
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>审核结果</h2>
+    </div>
+    <div class="list">
+        <article class="list-item">
+            <div class="list-item-header">
+                <div>
+                    <h3>{{ application.username }}</h3>
+                    <p class="muted">
+                        申请身份：{{ '陪玩师' if application_role == 'booster' else '商家' }}
+                        {% if application_role == 'merchant' %}
+                            · 店铺：{{ application.store_name or '未填写' }}{% if application.store_city %} · {{ application.store_city }}{% endif %}
+                        {% endif %}
+                    </p>
+                    <p class="muted">提交时间：{{ application.created_at or '未知' }}</p>
+                </div>
+                {% if application.status == 'approved' %}
+                    <span class="badge badge-soft-success">审核通过</span>
+                {% elif application.status == 'rejected' %}
+                    <span class="badge badge-soft-danger">审核驳回</span>
+                {% else %}
+                    <span class="badge badge-soft-warning">审核中</span>
+                {% endif %}
+            </div>
+            {% if application.review_note %}
+                <p>审核意见：{{ application.review_note }}</p>
+            {% endif %}
+            {% if application.reviewed_at %}
+                <p class="muted">处理时间：{{ application.reviewed_at }}</p>
+            {% endif %}
+        </article>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

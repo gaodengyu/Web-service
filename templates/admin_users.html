@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% block title %}账号治理 | GameBuddy{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">User Governance</span>
+        <h1>统一审核店铺、店内陪玩师和全平台账号</h1>
+        <p>管理员现在先审核店铺合规，再审核店内陪玩师，最后仍然可以管理玩家、陪玩师、陪玩店和管理员之外的全部账号状态。</p>
+    </div>
+</section>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>待审核店铺</h2>
+    </div>
+    {% if pending_store_applications %}
+        <div class="list">
+            {% for store in pending_store_applications %}
+                <article class="list-item">
+                    <div class="list-item-header">
+                        <div>
+                            <h3>{{ store.name }}</h3>
+                            <p class="muted">{{ store.games_text or '多游戏接单' }} · {{ store.owner_display_name }}</p>
+                            <p class="muted">{{ store.description or store.tagline or '待补充' }}</p>
+                        </div>
+                        <span class="badge badge-soft-warning">待审核</span>
+                    </div>
+                    <form method="post" class="button-row" style="align-items: flex-start; flex-wrap: wrap;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="store_id" value="{{ store.id }}">
+                        <input type="text" name="review_note" placeholder="审核意见（选填）" style="min-width: 240px;">
+                        <button type="submit" name="action" value="approve_store" class="success">通过店铺审核</button>
+                        <button type="submit" name="action" value="reject_store" class="danger">驳回店铺审核</button>
+                    </form>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">当前没有待审核的店铺。</div>
+    {% endif %}
+</section>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>待审核商家入驻</h2>
+    </div>
+    {% if pending_merchant_applications %}
+        <div class="list">
+            {% for application in pending_merchant_applications %}
+                <article class="list-item">
+                    <div class="list-item-header">
+                        <div>
+                            <h3>{{ application.username }}</h3>
+                            <p class="muted">店铺：{{ application.store_name or '未填写' }}{% if application.store_city %} · {{ application.store_city }}{% endif %}</p>
+                            <p class="muted">邮箱：{{ application.email }}{% if application.phone %} · 手机号：{{ application.phone }}{% endif %}</p>
+                        </div>
+                        <span class="badge badge-soft-warning">待审核</span>
+                    </div>
+
+                    <p style="margin: 8px 0 14px;">
+                        {% if application.business_license_url %}
+                            <a href="{{ application.business_license_url }}" target="_blank" rel="noopener">查看营业资质</a>
+                        {% endif %}
+                        {% if application.id_proof_url %}
+                            {% if application.business_license_url %} · {% endif %}
+                            <a href="{{ application.id_proof_url }}" target="_blank" rel="noopener">查看身份资料</a>
+                        {% endif %}
+                    </p>
+
+                    <form method="post" class="button-row" style="align-items: flex-start; flex-wrap: wrap;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="merchant_application_id" value="{{ application.id }}">
+                        <input type="text" name="review_note" placeholder="审核意见（选填）" style="min-width: 240px;">
+                        <button type="submit" name="action" value="approve_merchant_application" class="success">通过并创建商家账号</button>
+                        <button type="submit" name="action" value="reject_merchant_application" class="danger">驳回申请</button>
+                    </form>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">当前没有待审核的商家申请。</div>
+    {% endif %}
+</section>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>待审核陪玩师</h2>
+    </div>
+    {% if pending_booster_applications %}
+        <div class="list">
+            {% for application in pending_booster_applications %}
+                <article class="list-item">
+                    <div class="list-item-header">
+                        <div>
+                            <h3>{{ application.display_name or application.username }}</h3>
+                            <p class="muted">{{ application.store_name or '未归属店铺' }} · {{ application.game_account or '待补充' }}</p>
+                            <p class="muted">账号名：{{ application.username }}{% if application.email and not application.email.endswith('@pending.local') %} · {{ application.email }}{% endif %}</p>
+                        </div>
+                        <span class="badge badge-soft-warning">待审核</span>
+                    </div>
+
+                    {% if application.proof_image_url %}
+                        <p style="margin: 8px 0 14px;"><a href="{{ application.proof_image_url }}" target="_blank" rel="noopener">查看实力截图</a></p>
+                    {% endif %}
+
+                    <form method="post" class="button-row" style="align-items: flex-start; flex-wrap: wrap;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="application_id" value="{{ application.id }}">
+                        <input type="text" name="review_note" placeholder="审核意见（选填）" style="min-width: 240px;">
+                        <button type="submit" name="action" value="approve_booster_application" class="success">通过并创建账号</button>
+                        <button type="submit" name="action" value="reject_booster_application" class="danger">驳回申请</button>
+                    </form>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">当前没有待审核的陪玩师申请。</div>
+    {% endif %}
+</section>
+
+<div class="split" style="margin-top: 18px;">
+    <section class="surface">
+        <div class="section-title">
+            <h2>最近店铺审核记录</h2>
+        </div>
+        <div class="list">
+            {% for store in reviewed_store_applications %}
+                <article class="list-item">
+                    <div class="list-item-header">
+                        <div>
+                            <h3>{{ store.name }}</h3>
+                            <p class="muted">{{ store.review_note or '暂无备注' }}</p>
+                        </div>
+                        <span class="badge {{ store.review_badge }}">{{ store.review_label }}</span>
+                    </div>
+                </article>
+            {% else %}
+                <div class="empty-state">暂无店铺审核记录。</div>
+            {% endfor %}
+        </div>
+    </section>
+    <section class="surface">
+        <div class="section-title">
+            <h2>最近陪玩师审核记录</h2>
+        </div>
+        <div class="list">
+            {% for application in reviewed_booster_applications %}
+                <article class="list-item">
+                    <div class="list-item-header">
+                        <div>
+                            <h3>{{ application.display_name or application.username }}</h3>
+                            <p class="muted">{{ application.store_name or '未归属店铺' }}</p>
+                        </div>
+                        <span class="badge {{ 'badge-soft-success' if application.status == 'approved' else 'badge-soft-danger' }}">{{ '已通过' if application.status == 'approved' else '已驳回' }}</span>
+                    </div>
+                    {% if application.review_note %}
+                        <p>{{ application.review_note }}</p>
+                    {% endif %}
+                </article>
+            {% else %}
+                <div class="empty-state">暂无陪玩师审核记录。</div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>最近商家审核记录</h2>
+    </div>
+    <div class="list">
+        {% for application in reviewed_merchant_applications %}
+            <article class="list-item">
+                <div class="list-item-header">
+                    <div>
+                        <h3>{{ application.username }}</h3>
+                        <p class="muted">店铺：{{ application.store_name or '未填写' }}</p>
+                    </div>
+                    <span class="badge {{ 'badge-soft-success' if application.status == 'approved' else 'badge-soft-danger' }}">{{ '已通过' if application.status == 'approved' else '已驳回' }}</span>
+                </div>
+                {% if application.review_note %}
+                    <p>{{ application.review_note }}</p>
+                {% endif %}
+            </article>
+        {% else %}
+            <div class="empty-state">暂无商家审核记录。</div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>平台账号</h2>
+    </div>
+    {% if users %}
+        <div class="list">
+            {% for user in users %}
+                <article class="list-item">
+                    <div class="list-item-header">
+                        <div>
+                            <h3>{{ user.username }}</h3>
+                            <p>{{ user.role }}</p>
+                            <p class="muted">邮箱：{{ user.email or '未绑定' }}</p>
+                            {% if user.phone %}
+                                <p class="muted">手机号：{{ user.phone }}</p>
+                            {% endif %}
+                        </div>
+                        {% if user.role != 'admin' %}
+                            <span class="badge {{ 'badge-soft-danger' if user.banned else 'badge-soft-success' }}">{{ '已封禁' if user.banned else '正常' }}</span>
+                        {% else %}
+                            <span class="badge badge-soft-info">管理员</span>
+                        {% endif %}
+                    </div>
+
+                    {% if user.role != 'admin' %}
+                        <p class="muted" style="margin: 8px 0 14px;">
+                            失败登录次数：{{ user.failed_login_attempts or 0 }}/5
+                            {% if user.lock_reason == 'too_many_failed_password_attempts' %}
+                                · 已因连续输错密码被自动锁定
+                            {% endif %}
+                        </p>
+
+                        <div class="button-row">
+                            <form method="post">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <input type="hidden" name="username" value="{{ user.username }}">
+                                {% if user.banned %}
+                                    <button type="submit" name="action" value="unban" class="success">解封账号</button>
+                                {% else %}
+                                    <button type="submit" name="action" value="ban" class="danger">封禁账号</button>
+                                {% endif %}
+                            </form>
+
+                            <form method="post" class="button-row">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <input type="hidden" name="username" value="{{ user.username }}">
+                                <input type="text" name="new_password" placeholder="输入新密码" style="min-width: 220px;">
+                                <button type="submit" name="action" value="reset_password" class="warning">重置密码</button>
+                            </form>
+
+                            <form method="post" onsubmit="return confirm('确定删除账号 {{ user.username }} 吗？');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <input type="hidden" name="username" value="{{ user.username }}">
+                                <button type="submit" name="action" value="delete" class="secondary">删除账号</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">暂无账号数据。</div>
+    {% endif %}
+</section>
+{% endblock %}

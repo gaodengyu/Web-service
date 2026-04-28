@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% block title %}店内陪玩师 | GameBuddy{% endblock %}
+
+{% block page_sidebar %}
+    {% set active_page = 'merchant_talents' %}
+    {% include '_merchant_sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">Store Talent</span>
+        <h1>{{ store.name }} 路 店内陪玩师</h1>
+        <p>这里既可以提交新的候选陪玩，也可以处理已经开通平台账号的店内入驻申请。</p>
+    </div>
+</section>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>提交新候选人</h2>
+        <span class="muted">适合线下招募或私域带来的候选人。提交后会先进入平台审核，通过后自动归属当前店铺。</span>
+    </div>
+    <form method="post" enctype="multipart/form-data" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="action" value="submit_application">
+        <div class="form-grid two">
+            <div>
+                <label>账号名</label>
+                <input type="text" name="username" placeholder="例如：club7_lane_01" required>
+            </div>
+            <div>
+                <label>显示名</label>
+                <input type="text" name="display_name" placeholder="例如：上分队长阿泽">
+            </div>
+        </div>
+        <div class="form-grid two">
+            <div>
+                <label>初始密码</label>
+                <input type="text" name="password" placeholder="至少填写一个可登录密码" required>
+            </div>
+            <div>
+                <label>游戏账号</label>
+                <input type="text" name="game_account" placeholder="例如：峡谷之巅-123456" required>
+            </div>
+        </div>
+        <div class="form-grid two">
+            <div>
+                <label>邮箱</label>
+                <input type="email" name="email" placeholder="审核结果通知邮箱">
+            </div>
+            <div>
+                <label>手机号</label>
+                <input type="text" name="phone" placeholder="用于后续登录或联系">
+            </div>
+        </div>
+        <div class="form-grid two">
+            <div>
+                <label>擅长游戏</label>
+                <input type="text" name="games" placeholder="例如：英雄联盟 / 无畏契约">
+            </div>
+            <div>
+                <label>当前段位</label>
+                <input type="text" name="rank" placeholder="例如：王者 80 星">
+            </div>
+        </div>
+        <div class="form-grid two">
+            <div>
+                <label>参考单价</label>
+                <input type="number" name="price" min="0" step="0.01" placeholder="例如：99">
+            </div>
+            <div>
+                <label>可接单时间</label>
+                <input type="text" name="available_time" placeholder="例如：每天 20:00 - 24:00">
+            </div>
+        </div>
+        <div class="form-grid two">
+            <div>
+                <label>服务风格</label>
+                <input type="text" name="play_style" placeholder="例如：技术陪练 / 娱乐整活">
+            </div>
+            <div>
+                <label>实力截图</label>
+                <input type="file" name="proof_image" accept=".png,.jpg,.jpeg,.webp,.gif" required>
+            </div>
+        </div>
+        <div>
+            <label>候选人介绍</label>
+            <textarea name="intro" rows="3" placeholder="写清楚擅长内容、服务风格和适合什么玩家场景"></textarea>
+        </div>
+        <div class="button-row">
+            <button type="submit" class="success">提交平台审核</button>
+        </div>
+    </form>
+</section>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>平台审核队列</h2>
+        <span class="muted">这些候选人已由店铺提交，正在等待平台创建账号或给出审核结果。</span>
+    </div>
+    <div class="list">
+        {% for application in pending_platform_review_applications %}
+            <article class="list-item">
+                <div class="list-item-header">
+                    <div>
+                        <h3>{{ application.display_name or application.username }}</h3>
+                        <p>{{ application.game_account or '待补充' }}</p>
+                        <p class="muted">账号：{{ application.username }}{% if application.email %} · {{ application.email }}{% endif %}</p>
+                    </div>
+                    <span class="badge badge-soft-warning">待平台审核</span>
+                </div>
+                {% if application.proof_image_url %}
+                    <p><a href="{{ application.proof_image_url }}" target="_blank" rel="noopener">查看实力截图</a></p>
+                {% endif %}
+                {% if application.review_note %}
+                    <p class="muted">备注：{{ application.review_note }}</p>
+                {% endif %}
+            </article>
+        {% else %}
+            <div class="empty-state">当前没有等待平台审核的候选人。</div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>待处理入驻申请</h2>
+        <span class="muted">这些申请来自已经开通平台账号的陪玩师，店铺通过后会立即归属当前店铺。</span>
+    </div>
+    <div class="list">
+        {% for application in pending_applications %}
+            <article class="list-item">
+                <div class="list-item-header">
+                    <div>
+                        <h3>{{ application.display_name or application.username }}</h3>
+                        <p>{{ application.game_account or '待补充' }}</p>
+                        <p class="muted">账号：{{ application.username }}</p>
+                    </div>
+                    <span class="badge badge-soft-warning">待店铺审核</span>
+                </div>
+                {% if application.proof_image_url %}
+                    <p><a href="{{ application.proof_image_url }}" target="_blank" rel="noopener">查看实力截图</a></p>
+                {% endif %}
+                <form method="post" class="form-grid">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="application_id" value="{{ application.id }}">
+                    <div class="form-grid two">
+                        <div>
+                            <label>店内单价</label>
+                            <input type="number" name="price" step="0.01" min="20" placeholder="例如：88">
+                        </div>
+                        <div>
+                            <label>审核意见</label>
+                            <input type="text" name="review_note" placeholder="例如：风格匹配，安排晚间档期">
+                        </div>
+                    </div>
+                    <div>
+                        <label>店内介绍</label>
+                        <textarea name="intro" minlength="15" placeholder="介绍擅长内容、服务风格和适合什么玩家场景，至少 15 字"></textarea>
+                    </div>
+                    <div class="button-row" style="align-items: flex-start; flex-wrap: wrap;">
+                        <button type="submit" name="action" value="approve_store_booster_application" class="success">通过并加入店铺</button>
+                        <button type="submit" name="action" value="reject_store_booster_application" class="danger">拒绝申请</button>
+                    </div>
+                </form>
+            </article>
+        {% else %}
+            <div class="empty-state">当前没有待处理的入驻申请。</div>
+        {% endfor %}
+    </div>
+</section>
+
+<div class="split" style="margin-top: 18px;">
+    <section class="surface">
+        <div class="section-title">
+            <h2>已通过的陪玩师</h2>
+            <span class="muted">这些账号已经可以登录并接收店铺分配的订单。</span>
+        </div>
+        <div class="list">
+            {% for booster in boosters %}
+                <article class="list-item">
+                    <div class="list-item-header">
+                        <div>
+                            <h3>{{ booster.display_name }}</h3>
+                            <p>{{ booster.profile.rank or '段位待补充' }}</p>
+                        </div>
+                        <span class="badge badge-soft-success">已通过</span>
+                    </div>
+                    <p>{{ booster.profile.play_style or booster.profile.intro or '资料正在完善中。' }}</p>
+                </article>
+            {% else %}
+                <div class="empty-state">当前还没有已通过审核的陪玩师。</div>
+            {% endfor %}
+        </div>
+    </section>
+    <section class="surface">
+        <div class="section-title">
+            <h2>审核队列</h2>
+            <span class="muted">最近处理记录</span>
+        </div>
+        <div class="list">
+            {% for application in reviewed_applications %}
+                <article class="list-item">
+                    <div class="list-item-header">
+                        <div>
+                            <h3>{{ application.display_name or application.username }}</h3>
+                            <p>{{ application.game_account or '待补充' }}</p>
+                        </div>
+                        <span class="badge {{ 'badge-soft-success' if application.status == 'approved' else 'badge-soft-danger' }}">{{ '已通过' if application.status == 'approved' else '已拒绝' }}</span>
+                    </div>
+                    {% if application.review_note %}
+                        <p class="muted">审核意见：{{ application.review_note }}</p>
+                    {% endif %}
+                    {% if application.proof_image_url %}
+                        <p><a href="{{ application.proof_image_url }}" target="_blank" rel="noopener">查看实力截图</a></p>
+                    {% endif %}
+                </article>
+            {% else %}
+                <div class="empty-state">暂时没有审核记录。</div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

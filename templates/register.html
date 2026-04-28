@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}注册 | GameBuddy{% endblock %}
+{% block content %}
+<div class="split">
+    <section class="hero">
+        <div class="hero-copy">
+            <span class="eyebrow">Create Account</span>
+            <h1>四种角色，一套完整协作流程</h1>
+            <p>玩家下单，陪玩师接单，商家负责店铺经营与排班，平台管理员处理治理与售后。无论是个人接单还是品牌化运营，都可以从这里开始。</p>
+            <div class="list">
+                <div class="list-item">
+                    <h3>玩家</h3>
+                    <p>搜索筛选、创建订单、确认完成、评价和投诉。</p>
+                </div>
+                <div class="list-item">
+                    <h3>陪玩师</h3>
+                    <p>配置资料、处理订单、与玩家沟通、积累口碑。</p>
+                </div>
+                <div class="list-item">
+                    <h3>商家</h3>
+                    <p>创建店铺、上传品牌封面、管理店内陪玩师和订单表现。</p>
+                </div>
+                <div class="list-item">
+                    <h3>管理员</h3>
+                    <p>管理账号、处理投诉、查看统计、发送平台通知。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="surface">
+        <div class="section-title">
+            <h2>创建账号</h2>
+        </div>
+        <form method="post" class="form-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div>
+                <label for="username">用户名</label>
+                <input id="username" name="username" placeholder="创建你的平台用户名" required>
+            </div>
+            <div>
+                <label for="pwd">密码</label>
+                <input id="pwd" type="password" name="pwd" placeholder="创建登录密码" required>
+            </div>
+            <div>
+                <label for="role">身份</label>
+                <select id="role" name="role" required>
+                    <option value="player">玩家</option>
+                    <option value="booster">陪玩师 / 陪练</option>
+                    <option value="merchant">商家 / 店主</option>
+                    <option value="admin">管理员</option>
+                </select>
+            </div>
+            <div>
+                <label for="admin_register_password">管理员创建口令</label>
+                <input id="admin_register_password" type="password" name="admin_register_password" placeholder="仅创建管理员时填写">
+            </div>
+            <button type="submit">完成注册</button>
+        </form>
+        <p style="margin-top: 14px;">已经有账号？<a href="{{ url_for('login') }}" style="color: var(--accent);">直接登录</a></p>
+    </section>
+</div>
+{% endblock %}

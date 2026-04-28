@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}订单与投诉管理 | GameBuddy{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">Dispute Center</span>
+        <h1>管理员可以筛选订单、处理投诉并标记退款</h1>
+        <p>订单状态、投诉处理、管理员回复和退款动作都会在这里统一流转。</p>
+    </div>
+</section>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>筛选订单</h2>
+    </div>
+    <form method="get" class="form-grid two">
+        <div>
+            <label for="keyword">关键词</label>
+            <input id="keyword" name="keyword" value="{{ filters.keyword }}" placeholder="玩家 / 打手 / 游戏">
+        </div>
+        <div>
+            <label for="status">订单状态</label>
+            <select id="status" name="status">
+                <option value="">全部</option>
+                {% for option in order_status_options %}
+                    <option value="{{ option }}" {% if filters.status == option %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="complaint">投诉状态</label>
+            <select id="complaint" name="complaint">
+                <option value="">全部</option>
+                {% for option in complaint_status_options %}
+                    <option value="{{ option }}" {% if filters.complaint == option %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="button-row" style="align-self: end;">
+            <button type="submit">应用筛选</button>
+            <a class="button-link secondary" href="{{ url_for('admin_orders') }}">重置</a>
+        </div>
+    </form>
+</section>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>订单列表</h2>
+        <span class="muted">{{ orders|length }} 条记录</span>
+    </div>
+    {% if orders %}
+        <div class="list">
+            {% for order in orders %}
+                <article class="list-item">
+                    <div class="list-item-header">
+                        <div>
+                            <h3>#{{ order.id }} · {{ order.player }} → {{ order.booster }}</h3>
+                            <p>{{ order.game }} / {{ order.service_type or '标准服务' }}</p>
+                        </div>
+                        <div class="pill-row">
+                            <span class="badge {{ order_status_class(order.status) }}">{{ order.status }}</span>
+                            <span class="badge {{ payment_status_class(order.payment_status) }}">{{ order.payment_status }}</span>
+                            <span class="badge {{ complaint_status_class(order.complaint_status) }}">{{ order.complaint_status }}</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-row">
+                        <span class="kpi-pill">目标：{{ order.target_rank or '未填写' }}</span>
+                        <span class="kpi-pill">时长：{{ order.duration or '未填写' }}</span>
+                        <span class="kpi-pill">时间：{{ order.preferred_time or '未填写' }}</span>
+                        <span class="kpi-pill">价格：¥{{ order.price or '--' }}</span>
+                    </div>
+                    <p>{{ order.detail }}</p>
+
+                    {% if order.rating %}
+                        <div class="list-item"><strong>评价</strong><p>{{ order.rating }} 星{% if order.comment %} · {{ order.comment }}{% endif %}</p></div>
+                    {% endif %}
+
+                    {% if order.complaint %}
+                        <div class="list-item">
+                            <strong>投诉内容</strong>
+                            <p>{{ order.complaint }}</p>
+                            {% if order.complaint_reply %}
+                                <p>当前回复：{{ order.complaint_reply }}</p>
+                            {% endif %}
+                        </div>
+                        <form method="post" class="form-grid">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="order_id" value="{{ order.id }}">
+                            <div class="form-grid two">
+                                <div>
+                                    <label>投诉状态</label>
+                                    <select name="complaint_status">
+                                        {% for option in complaint_status_options %}
+                                            <option value="{{ option }}" {% if order.complaint_status == option %}selected{% endif %}>{{ option }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label>管理员备注</label>
+                                    <input name="admin_note" value="{{ order.admin_note }}" placeholder="内部备注">
+                                </div>
+                            </div>
+                            <div>
+                                <label>处理回复</label>
+                                <textarea name="complaint_reply" placeholder="写给玩家和打手的处理结果说明">{{ order.complaint_reply }}</textarea>
+                            </div>
+                            <div class="button-row">
+                                <button type="submit" name="action" value="handle_complaint">更新投诉处理结果</button>
+                                <button type="submit" name="action" value="mark_refunded" class="danger">直接标记退款</button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">没有符合筛选条件的订单。</div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,389 @@
+{% extends 'base.html' %}
+{% block title %}进入接待大厅下单 | GameBuddy{% endblock %}
+{% block content %}
+
+<style>
+    .quick-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+        margin-top: 4px;
+    }
+    .quick-tag {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #e0e0e0;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+    .quick-tag:hover {
+        background: rgba(126, 230, 61, 0.15);
+        border-color: #7ee63d;
+        color: #7ee63d;
+    }
+
+    .stepper-control {
+        display: flex;
+        align-items: center;
+        background: rgba(15, 23, 42, 0.06);
+        border: 1px solid rgba(15, 23, 42, 0.16);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .stepper-btn {
+        background: transparent;
+        border: none;
+        color: #7ee63d;
+        font-size: 1.5rem;
+        width: 44px;
+        height: 44px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+    }
+    .stepper-btn:hover {
+        background: rgba(126, 230, 61, 0.15);
+    }
+    .stepper-input {
+        flex: 1;
+        background: transparent !important;
+        border: none !important;
+        text-align: center;
+        font-size: 1.1rem;
+        color: var(--text);
+        font-weight: 600;
+        padding: 0 !important;
+    }
+    .stepper-input::-webkit-outer-spin-button,
+    .stepper-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .rank-hours-row.is-single {
+        grid-template-columns: 1fr;
+    }
+</style>
+
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">Reception Hall</span>
+        <h1>向 {{ store.name }} 发起订单</h1>
+        <div class="kpi-row">
+            <span class="kpi-pill">{{ store.games_text or '多游戏接单' }}</span>
+            <span class="kpi-pill">{{ store.booster_count }} 位陪玩师</span>
+            <span class="kpi-pill">{{ store.price_text }}</span>
+        </div>
+    </div>
+</section>
+
+<div class="split" style="margin-top: 18px;">
+    <section class="surface">
+        <div class="section-title">
+            <h2>店铺信息</h2>
+        </div>
+        <div class="list">
+            <article class="list-item"><strong>接待方式</strong><p>{{ store.contact_note or '接待大厅在线 / 统一派单' }}</p></article>
+            <article class="list-item"><strong>主理人</strong><p>{{ store.owner_display_name }}</p></article>
+            <article class="list-item"><strong>可接游戏</strong><p>{{ store.games_text or '待补充' }}</p></article>
+            <article class="list-item"><strong>店铺简介</strong><p>{{ store.description or store.tagline or '店铺会根据需求安排最合适的陪玩师。' }}</p></article>
+        </div>
+    </section>
+
+    <section class="surface">
+        <div class="section-title">
+            <h2>订单需求</h2>
+        </div>
+        <form method="post" class="form-grid" id="order-form" data-wallet-available="{{ wallet_available }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            
+            <input type="hidden" id="real_start_time" name="start_time">
+            <input type="hidden" id="real_end_time" name="end_time">
+            
+            <div>
+                <label for="selected_booster">选择陪玩师</label>
+                <select id="selected_booster" name="selected_booster" required>
+                    <option value="">请选择一位陪玩师</option>
+                    {% for booster in store.boosters %}
+                        <option value="{{ booster.username }}" data-hourly-rate="{{ booster.price_value or booster.profile.price or 0 }}">
+                            {{ booster.display_name }} · ¥{{ booster.profile.price or '--' }}/小时 · {{ booster.profile.rank or '段位待补充' }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-grid two">
+                <div>
+                    <label for="service_type">服务类型</label>
+                    <select id="service_type" name="service_type" required>
+                        <option value="">请选择服务类型</option>
+                        {% for option in service_type_options %}
+                            <option value="{{ option }}">{{ option }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="game">服务游戏</label>
+                    <input id="game" name="game" value="{{ store.games[0] if store.games else '' }}" placeholder="例如：英雄联盟" required>
+                </div>
+            </div>
+
+            <div class="form-grid two rank-hours-row is-single" id="rank_hours_row">
+                <div id="target_rank_group" style="display: none;">
+                    <label for="target_rank">目标段位</label>
+                    <input id="target_rank" name="target_rank" placeholder="例如：钻石晋级赛">
+                </div>
+                <div>
+                    <label>购买时长 (小时)</label>
+                    <div class="stepper-control">
+                        <button type="button" class="stepper-btn" id="btn-minus">−</button>
+                        <input type="number" id="order_hours" name="order_hours" class="stepper-input" value="1.0" min="0.5" max="24" step="0.5" readonly>
+                        <button type="button" class="stepper-btn" id="btn-plus">+</button>
+                    </div>
+                    <p style="font-size: 0.75rem; color: #678095; margin-top: 6px; line-height: 1.4;">
+                        💡 计费规则：单局游戏超时 15 分钟内免单，超过 15 分钟系统将自动按半小时补单。
+                    </p>
+                </div>
+            </div>
+
+            <div class="form-grid two">
+                <div>
+                    <label for="start_time_mode">何时开始</label>
+                    <select id="start_time_mode" name="start_time_mode">
+                        <option value="now">⚡ 立即开始 (下单后马上接单)</option>
+                        <option value="custom">📅 预约具体时间</option>
+                    </select>
+                </div>
+                <div id="custom_time_container" style="display: none;">
+                    <label for="start_time_display">预约时间</label>
+                    <input id="start_time_display" type="datetime-local">
+                </div>
+            </div>
+            
+            <div>
+                <label for="detail">需求描述</label>
+                <div class="quick-tags">
+                    <span class="quick-tag">🔥 技术上分 (硬核)</span>
+                    <span class="quick-tag">🎉 娱乐整活 (开心就好)</span>
+                    <span class="quick-tag">🎙️ 需要语音沟通</span>
+                    <span class="quick-tag">👨‍🏫 耐心教学指导</span>
+                    <span class="quick-tag">🛡️ 绝不压力 (心态好)</span>
+                </div>
+                <textarea id="detail" name="detail" placeholder="说明你的打法、希望的风格、是否需要教学或上分陪练" required rows="3"></textarea>
+            </div>
+
+            <div class="form-grid two">
+                <div>
+                    <label>陪玩师每小时单价</label>
+                    <input id="selected_hourly_rate" value="请先选择陪玩师" readonly>
+                </div>
+                <div>
+                    <label>自动计算总价</label>
+                    <input id="calculated_total" value="¥0" readonly>
+                </div>
+            </div>
+
+            <div class="form-grid two">
+                <div>
+                    <label for="payment_method">支付方式</label>
+                    <select id="payment_method" name="payment_method">
+                        <option value="buddy_coin" {% if wallet_available > 0 %}selected{% endif %}>巴迪币余额支付（可用 {{ wallet_available_text }}）</option>
+                        <option value="stripe" {% if wallet_available <= 0 %}selected{% endif %}>Stripe 在线支付</option>
+                    </select>
+                </div>
+                <div>
+                    <label>支付提示</label>
+                    <input id="payment_hint" value="请选择陪玩师后自动计算" readonly>
+                </div>
+            </div>
+
+            <div class="button-row">
+                <button type="submit">提交并进入支付</button>
+                <a class="button-link secondary" href="{{ url_for('store_detail', store_slug=store.slug) }}">返回店铺页</a>
+            </div>
+        </form>
+    </section>
+</div>
+
+<script>
+(() => {
+    const form = document.getElementById("order-form");
+    if (!form) return;
+
+    const boosterSelect = form.querySelector("#selected_booster");
+    const serviceTypeSelect = form.querySelector("#service_type");
+    const totalInput = form.querySelector("#calculated_total");
+    const hourlyRateInput = form.querySelector("#selected_hourly_rate");
+    const paymentMethodSelect = form.querySelector("#payment_method");
+    const paymentHintInput = form.querySelector("#payment_hint");
+    const walletAvailable = Number(form.dataset.walletAvailable || 0);
+    
+    const hoursInput = form.querySelector("#order_hours");
+    const btnMinus = form.querySelector("#btn-minus");
+    const btnPlus = form.querySelector("#btn-plus");
+    
+    const startTimeMode = form.querySelector("#start_time_mode");
+    const customTimeContainer = form.querySelector("#custom_time_container");
+    const startDisplayInput = form.querySelector("#start_time_display");
+    const rankHoursRow = form.querySelector("#rank_hours_row");
+    const targetRankGroup = form.querySelector("#target_rank_group");
+    const targetRankInput = form.querySelector("#target_rank");
+
+    // 获取隐藏字段
+    const realStartInput = form.querySelector("#real_start_time");
+    const realEndInput = form.querySelector("#real_end_time");
+
+    const detailInput = form.querySelector("#detail");
+    const quickTags = form.querySelectorAll(".quick-tag");
+
+    // --- 快捷标签逻辑 ---
+    if (detailInput && quickTags.length > 0) {
+        quickTags.forEach(tag => {
+            tag.addEventListener("click", function() {
+                const tagText = this.innerText.replace(/^[\uD800-\uDBFF\uDC00-\uDFFF\u2000-\u3300]+\s*/, '');
+                let currentText = detailInput.value.trim();
+                if (!currentText.includes(tagText)) {
+                    detailInput.value = currentText ? currentText + "，" + tagText : tagText;
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => this.style.transform = 'scale(1)', 150);
+                }
+            });
+        });
+    }
+
+    // --- 步进器逻辑 ---
+    btnMinus.addEventListener('click', () => {
+        let val = parseFloat(hoursInput.value);
+        if (val > 0.5) {
+            hoursInput.value = (val - 0.5).toFixed(1);
+            updateQuote(); 
+        }
+    });
+
+    btnPlus.addEventListener('click', () => {
+        let val = parseFloat(hoursInput.value);
+        if (val < 24) { 
+            hoursInput.value = (val + 0.5).toFixed(1);
+            updateQuote(); 
+        }
+    });
+
+    // --- 动态展示逻辑 ---
+    const getLocalISOString = (date) => {
+        const offset = date.getTimezoneOffset();
+        const adjustedDate = new Date(date.getTime() - (offset * 60 * 1000));
+        return adjustedDate.toISOString().slice(0, 16);
+    };
+
+    startTimeMode.addEventListener('change', (e) => {
+        if (e.target.value === 'custom') {
+            customTimeContainer.style.display = 'block';
+            startDisplayInput.min = getLocalISOString(new Date());
+        } else {
+            customTimeContainer.style.display = 'none';
+            startDisplayInput.value = ''; 
+        }
+    });
+
+    startDisplayInput.addEventListener("change", () => {
+        if (startDisplayInput.value && startDisplayInput.value < getLocalISOString(new Date())) {
+            startDisplayInput.value = getLocalISOString(new Date());
+        }
+    });
+
+    const updateTargetRankVisibility = () => {
+        const needsTargetRank = serviceTypeSelect && serviceTypeSelect.value === "技术上分";
+        if (!targetRankGroup || !targetRankInput || !rankHoursRow) {
+            return;
+        }
+        targetRankGroup.style.display = needsTargetRank ? "block" : "none";
+        rankHoursRow.classList.toggle("is-single", !needsTargetRank);
+        targetRankInput.required = needsTargetRank;
+        if (!needsTargetRank) {
+            targetRankInput.value = "";
+        }
+    };
+
+    // --- 计算金额逻辑 ---
+    const currentHourlyRate = () => {
+        const selected = boosterSelect.options[boosterSelect.selectedIndex];
+        return Number(selected?.dataset.hourlyRate || 0);
+    };
+
+    const updateQuote = () => {
+        const hourlyRate = currentHourlyRate();
+        const hours = parseFloat(hoursInput.value) || 1.0; 
+        const total = Math.max(hourlyRate * hours, 0);
+        hourlyRateInput.value = hourlyRate > 0 ? `¥${hourlyRate}/小时` : "请先选择陪玩师";
+        if (hourlyRate <= 0) {
+            totalInput.value = "¥0";
+            if (paymentHintInput) {
+                paymentHintInput.value = "请先选择陪玩师后自动计算";
+            }
+            return;
+        }
+        totalInput.value = `¥${total.toFixed(2).replace(/\.00$/, "")}`;
+        if (!paymentHintInput || !paymentMethodSelect) {
+            return;
+        }
+        if (paymentMethodSelect.value === "buddy_coin") {
+            if (walletAvailable >= total) {
+                paymentHintInput.value = `将扣除 ${total.toFixed(2).replace(/\.00$/, "")} 巴迪币（可用 ${walletAvailable.toFixed(2).replace(/\.00$/, "")}）`;
+            } else {
+                paymentHintInput.value = `余额不足：需 ${total.toFixed(2).replace(/\.00$/, "")}，当前可用 ${walletAvailable.toFixed(2).replace(/\.00$/, "")}，可改用 Stripe`;
+            }
+            return;
+        }
+        paymentHintInput.value = "将跳转至 Stripe 完成支付";
+    };
+
+    if (paymentMethodSelect) {
+        paymentMethodSelect.addEventListener("change", updateQuote);
+    }
+    if (serviceTypeSelect) {
+        serviceTypeSelect.addEventListener("change", updateTargetRankVisibility);
+    }
+    boosterSelect.addEventListener("change", updateQuote);
+    updateTargetRankVisibility();
+    updateQuote();
+
+    // ==========================================
+    // 💥 关键魔法：拦截提交，填充真实的开始和结束时间
+    // ==========================================
+    form.addEventListener("submit", function(e) {
+        let startDate;
+        
+        if (startTimeMode.value === "now") {
+            // 如果是“立即开始”，系统偷偷获取当前的精确时间
+            startDate = new Date();
+        } else {
+            // 如果是“预约时间”，检查用户选没选
+            if (!startDisplayInput.value) {
+                e.preventDefault(); // 阻止提交
+                alert("请先在日历中选择预约的具体时间！");
+                startDisplayInput.focus();
+                return;
+            }
+            startDate = new Date(startDisplayInput.value);
+        }
+
+        // 通过 [开始时间] + [购买小时]，自动算出 [结束时间]
+        const hours = parseFloat(hoursInput.value) || 1.0;
+        const endDate = new Date(startDate.getTime() + hours * 60 * 60 * 1000);
+
+        // 把算好的时间，填入隐藏框，发送给 Python！
+        realStartInput.value = getLocalISOString(startDate);
+        realEndInput.value = getLocalISOString(endDate);
+        
+        // 接下来表单就会带着这两个隐藏字段，顺利通过 Python 的严苛检查了。
+    });
+})();
+</script>
+{% endblock %}

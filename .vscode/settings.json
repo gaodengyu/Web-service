@@ -1,0 +1,9 @@
+{
+    "git.ignoreLimitWarning": true,
+    "chat.tools.terminal.autoApprove": {
+        "/^& \"c:/Users/56458/Desktop/Gamebuddy \\(3\\)/\\.venv/Scripts/python\\.exe\" -m pytest test/tests/test_order_workflow\\.py -k buddy_coin -q$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

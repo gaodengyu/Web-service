@@ -1,0 +1,30 @@
+<div class="price-range-wrap" data-price-range>
+    <div class="price-range-values">
+        <span data-price-min-label>¥{{ current_min_price }}</span>
+        <span data-price-max-label>¥{{ current_max_price }}</span>
+    </div>
+    <div class="price-range-track">
+        <div class="price-range-fill" data-price-fill></div>
+        <input
+            class="price-range-input"
+            type="range"
+            min="{{ price_min }}"
+            max="{{ price_max }}"
+            value="{{ current_min_price }}"
+            step="1"
+            name="min_price"
+            data-price-min-input
+        >
+        <input
+            class="price-range-input"
+            type="range"
+            min="{{ price_min }}"
+            max="{{ price_max }}"
+            value="{{ current_max_price }}"
+            step="1"
+            name="max_price"
+            data-price-max-input
+        >
+    </div>
+    <div class="price-range-note">{{ range_note_prefix or '价格范围' }}：¥{{ price_min }} - ¥{{ price_max }}</div>
+</div>

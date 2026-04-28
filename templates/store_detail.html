@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% block title %}{{ store.name }} | GameBuddy{% endblock %}
+
+{% block head_extra %}
+<style>
+    .store-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: stretch;
+    }
+
+    .store-hero-copy {
+        max-width: none;
+    }
+
+    .store-tag-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .store-metric-card {
+        padding: 20px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 252, 0.96));
+    }
+
+    .store-metric-card .stat-value {
+        font-size: 1.58rem;
+        line-height: 1.2;
+    }
+</style>
+{% endblock %}
+
+{% block page_sidebar %}
+<div class="sidebar-block">
+    <div class="sidebar-group">
+        <div class="sidebar-title">快速导航</div>
+        <a class="sidebar-link" href="{{ url_for('boosters_list') }}">返回发现页</a>
+        <a class="sidebar-link is-active" href="{{ url_for('store_detail', store_slug=store.slug) }}">{{ store.name }}</a>
+        {% if session.get('role') == 'merchant' and session.get('username') == store.owner_username %}
+            <a class="sidebar-link" href="{{ url_for('merchant_home') }}">进入商家后台</a>
+        {% endif %}
+    </div>
+    <div class="sidebar-group">
+        <div class="sidebar-title">主打游戏</div>
+        {% for game in store.games %}
+            <span class="sidebar-chip">{{ game }}</span>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="hero store-hero" {% if store.cover_url %}style="background-image: linear-gradient(135deg, rgba(10, 12, 16, 0.25), rgba(10, 12, 16, 0.88)), url('{{ store.cover_url }}'); background-size: cover; background-position: center;"{% endif %}>
+    <div class="hero-copy store-hero-copy">
+        <span class="eyebrow">{{ store.badge or '高评分陪玩店' }}</span>
+        <h1>{{ store.name }}</h1>
+        <p>{{ store.description or store.tagline or '适合想省心找人开黑、冲分、练英雄的玩家，下单后可由店铺帮你统一安排。' }}</p>
+        {% if store.games %}
+            <div class="store-tag-row">
+                {% for game in store.games[:4] %}
+                    <span class="chip">{{ game }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <div class="kpi-row">
+            <span class="kpi-pill">评分 {{ store.avg_rating or '新店' }}</span>
+            <span class="kpi-pill">{{ store.booster_count }} 位陪玩</span>
+            <span class="kpi-pill">完成 {{ store.completed_orders }} 单</span>
+            <span class="kpi-pill">{{ store.price_text }}</span>
+        </div>
+        <div class="cta-row">
+            {% if session.get('role') == 'player' %}
+                <a class="button-link" href="{{ url_for('contact_store', store_slug=store.slug) }}">先聊需求</a>
+                <a class="button-link secondary" href="{{ url_for('create_order', booster=store.slug) }}">立即下单</a>
+            {% elif not session.get('username') %}
+                <a class="button-link" href="{{ url_for('login') }}">登录后咨询</a>
+            {% elif session.get('role') == 'merchant' and session.get('username') == store.owner_username %}
+                <a class="button-link" href="{{ url_for('merchant_home') }}">进入商家后台</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<div class="grid four" style="margin-top: 18px;">
+    <section class="surface stat-card store-metric-card">
+        <span class="stat-label">玩家评分</span>
+        <div class="stat-value">{{ store.avg_rating or '新店' }}</div>
+    </section>
+    <section class="surface stat-card store-metric-card">
+        <span class="stat-label">已完成订单</span>
+        <div class="stat-value">{{ store.completed_orders }}</div>
+    </section>
+    <section class="surface stat-card store-metric-card">
+        <span class="stat-label">在店陪玩</span>
+        <div class="stat-value">{{ store.booster_count }} 位</div>
+    </section>
+    <section class="surface stat-card store-metric-card">
+        <span class="stat-label">价格参考</span>
+        <div class="stat-value">{{ store.price_text }}</div>
+    </section>
+</div>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <div>
+            <h2>这家店的陪玩师</h2>
+        </div>
+    </div>
+    {% if boosters %}
+        <div class="market-grid">
+            {% for booster in boosters %}
+                <article class="market-card">
+                    <div class="market-cover theme-{{ booster.profile.cover_theme }}" {% if booster.profile.cover_url %}style="background-image: linear-gradient(180deg, rgba(12, 14, 18, 0.12), rgba(12, 14, 18, 0.78)), url('{{ booster.profile.cover_url }}'); background-size: cover; background-position: center;"{% endif %}>
+                        <div class="market-cover-content">
+                            <div class="eyebrow" style="background: rgba(18,20,24,0.18); color: #fff;">{{ booster.profile.status_text or '可预约' }}</div>
+                        </div>
+                        <div class="market-cover-badge">{{ booster.profile.badge or '招牌陪玩' }}</div>
+                    </div>
+                    <div class="market-body">
+                        <div class="avatar-row">
+                            {% if booster.profile.avatar_url %}
+                                <img class="avatar-photo" src="{{ booster.profile.avatar_url }}" alt="{{ booster.display_name }}">
+                            {% else %}
+                                <div class="avatar-badge">{{ booster.avatar_text }}</div>
+                            {% endif %}
+                            <div>
+                                <h3>{{ booster.display_name }}</h3>
+                            </div>
+                        </div>
+                        <div class="market-meta">
+                            <span class="chip is-active">评分 {{ booster.stats.avg_rating or '新' }}</span>
+                            <span class="chip">完成 {{ booster.stats.completed_orders }} 单</span>
+                            <span class="chip">{% if booster.profile.price %}¥{{ booster.profile.price }}/小时{% else %}价格咨询{% endif %}</span>
+                        </div>
+                        {% if booster.profile.persona_tags %}
+                            <div class="market-meta">
+                                {% for tag in booster.profile.persona_tags[:4] %}
+                                    <span class="chip">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">这家店正在补充陪玩资料，你可以先咨询需求和档期安排。</div>
+    {% endif %}
+</section>
+
+{% if recommended_stores %}
+    <section class="surface" style="margin-top: 18px;">
+        <div class="section-title">
+            <div>
+                <h2>再看看这些相似店铺</h2>
+            </div>
+        </div>
+        <div class="market-grid">
+            {% for item in recommended_stores %}
+                <article class="market-card">
+                    <div class="market-cover theme-{{ item.theme }}"></div>
+                    <div class="market-body">
+                        <div class="avatar-row">
+                            {% if item.logo_url %}
+                                <img class="avatar-photo square" src="{{ item.logo_url }}" alt="{{ item.name }}">
+                            {% else %}
+                                <div class="avatar-badge">{{ item.logo_text }}</div>
+                            {% endif %}
+                            <div>
+                                <h3>{{ item.name }}</h3>
+                            </div>
+                        </div>
+                        <div class="market-meta">
+                            <span class="chip is-active">评分 {{ item.avg_rating or '新店' }}</span>
+                            <span class="chip">{{ item.price_text }}</span>
+                        </div>
+                        <div class="cta-row">
+                            <a class="button-link secondary" href="{{ url_for('store_detail', store_slug=item.slug) }}">查看店铺</a>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}
+{% endblock %}

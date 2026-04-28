@@ -1,0 +1,446 @@
+{% extends 'base.html' %}
+{% block title %}选择身份 | GameBuddy{% endblock %}
+{% block head_extra %}
+<style>
+    .dock,
+    .topbar,
+    .footer-note {
+        display: none;
+    }
+
+    .app-shell {
+        grid-template-columns: 1fr;
+        gap: 0;
+        padding: 0;
+        min-height: 100vh;
+        background:
+            radial-gradient(circle at top left, rgba(255, 232, 120, 0.38), transparent 28%),
+            radial-gradient(circle at bottom right, rgba(72, 214, 151, 0.22), transparent 26%),
+            linear-gradient(145deg, #f5fbe9 0%, #edf8f3 48%, #f3f8ff 100%);
+    }
+
+    .app-frame,
+    .workspace-main,
+    .page {
+        min-height: 100vh;
+    }
+
+    .app-frame {
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
+    }
+
+    .workspace-main {
+        padding: 0;
+    }
+
+    .page {
+        gap: 0;
+    }
+
+    .flash-stack {
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        z-index: 20;
+        width: min(360px, calc(100vw - 24px));
+    }
+
+    .role-shell {
+        min-height: 100vh;
+        padding: clamp(24px, 4vw, 44px);
+    }
+
+    .role-wrap {
+        width: min(1180px, 100%);
+        margin: 0 auto;
+        display: grid;
+        gap: 24px;
+    }
+
+    .role-intro h1 {
+        margin: 0 0 10px;
+        color: #1d3b51;
+        font-size: clamp(2rem, 2.8vw, 2.9rem);
+        line-height: 1.04;
+        letter-spacing: -0.05em;
+    }
+
+    .role-intro p {
+        margin: 0;
+        color: #678095;
+        line-height: 1.75;
+        max-width: 760px;
+    }
+
+    .role-form {
+        display: grid;
+        gap: 22px;
+    }
+
+    .role-fields,
+    .role-card-grid {
+        display: grid;
+        gap: 18px;
+    }
+
+    .role-fields {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding: 18px;
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(40, 74, 58, 0.08);
+        box-shadow: 0 24px 56px rgba(81, 123, 100, 0.12);
+        backdrop-filter: blur(14px);
+    }
+
+    .account-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .role-field label {
+        display: block;
+        margin-bottom: 8px;
+        color: #30506a;
+        font-weight: 700;
+        font-size: 0.92rem;
+    }
+
+    .role-field input {
+        width: 100%;
+        padding: 13px 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(121, 149, 167, 0.2);
+        background: rgba(255, 255, 255, 0.92);
+        color: #21384c;
+    }
+
+    .role-field.span-two {
+        grid-column: span 2;
+    }
+
+    .role-field.span-all {
+        grid-column: 1 / -1;
+    }
+
+    .role-card-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .role-option {
+        position: relative;
+        display: block;
+        cursor: pointer;
+    }
+
+    .role-option input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .role-card {
+        height: 100%;
+        display: grid;
+        gap: 16px;
+        padding: 18px;
+        border-radius: 30px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(44, 78, 64, 0.08);
+        box-shadow: 0 26px 56px rgba(86, 123, 106, 0.12);
+        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .role-option:hover .role-card {
+        transform: translateY(-4px);
+        box-shadow: 0 30px 62px rgba(86, 123, 106, 0.16);
+    }
+
+    .role-option input:checked + .role-card {
+        transform: translateY(-6px);
+        border-color: rgba(78, 194, 80, 0.38);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(244, 255, 243, 0.92));
+        box-shadow: 0 34px 72px rgba(80, 188, 83, 0.18);
+    }
+
+    .role-card img {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        border-radius: 24px;
+    }
+
+    .role-chip {
+        width: fit-content;
+        padding: 7px 12px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+    }
+
+    /* 玩家专属颜色 */
+    .role-card.player .role-chip {
+        background: rgba(255, 197, 71, 0.16);
+        color: #805600;
+    }
+
+    /* 陪玩专属颜色 */
+    .role-card.booster .role-chip {
+        background: rgba(157, 114, 255, 0.14);
+        color: #5522c1;
+    }
+
+    /* 商家专属颜色 */
+    .role-card.merchant .role-chip {
+        background: rgba(112, 143, 255, 0.14);
+        color: #3c56a2;
+    }
+
+    .role-card h2 {
+        margin: 0 0 8px;
+        color: #1c394e;
+        font-size: 1.3rem;
+    }
+
+    .role-card p {
+        margin: 0;
+        color: #607789;
+        line-height: 1.75;
+    }
+
+    .role-submit {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    .role-submit button,
+    .role-submit a {
+        min-width: 220px;
+        min-height: 56px;
+        border-radius: 18px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .role-submit button {
+        border: 0;
+        color: #fff;
+        background: linear-gradient(135deg, #218e5d, #7ee63d);
+        box-shadow: 0 18px 36px rgba(56, 176, 83, 0.26);
+        cursor: pointer;
+    }
+
+    .role-submit a {
+        border: 1px solid rgba(121, 149, 167, 0.2);
+        background: rgba(255, 255, 255, 0.8);
+        color: #4f6678;
+    }
+
+    /* ============================================== */
+    /* 动态隐藏层专用的包裹样式，保持间距完美 */
+    /* ============================================== */
+    .dynamic-fields-wrapper {
+        display: none;
+        gap: 22px;
+        animation: fadeIn 0.4s ease-in-out;
+    }
+
+    /* 丝滑的渐现动画 */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 960px) {
+        .role-fields,
+        .role-card-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .role-field.span-two,
+        .role-field.span-all {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .role-shell {
+            padding: 18px 14px 24px;
+        }
+
+        .role-submit {
+            flex-direction: column-reverse;
+        }
+
+        .role-submit button,
+        .role-submit a {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="role-shell">
+    <div class="role-wrap">
+        <header class="role-intro">
+            <h1>选择你的 GameBuddy 身份</h1>
+        </header>
+
+        <form method="post" class="role-form" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <section class="role-fields account-fields">
+                <div class="role-field">
+                    <label for="role_username">昵称</label>
+                    <input id="role_username" name="username" value="{{ suggested_username }}" placeholder="输入你想使用的昵称" required>
+                </div>
+                <div class="role-field">
+                    <label for="role_email">邮箱</label>
+                    <input id="role_email" type="email" name="email" value="{{ suggested_email }}" placeholder="you@example.com">
+                </div>
+            </section>
+
+            <section class="role-card-grid">
+                <label class="role-option">
+                    <input type="radio" name="role" value="player" {% if selected_role == 'player' %}checked{% endif %}>
+                    <span class="role-card player">
+                        <img src="{{ url_for('static', filename='images/role-player.png') }}" alt="玩家">
+                        <div>
+                            <span class="role-chip">玩家入口</span>
+                            <h2>玩家</h2>
+                            <p>按游戏、预算和评价挑选合适的陪玩店，找到一起上分、开黑或娱乐的伙伴。</p>
+                        </div>
+                    </span>
+                </label>
+
+                <label class="role-option">
+                    <input type="radio" name="role" value="booster" {% if selected_role == 'booster' %}checked{% endif %}>
+                    <span class="role-card booster">
+                        <img src="{{ url_for('static', filename='images/role-booster.png') }}" alt="陪玩">
+                        <div>
+                            <span class="role-chip">陪玩入驻</span>
+                            <h2>陪玩</h2>
+                            <p>展示擅长游戏、段位实力和可接单时间，用稳定专业的服务获得更多预约。</p>
+                        </div>
+                    </span>
+                </label>
+
+                <label class="role-option">
+                    <input type="radio" name="role" value="merchant" {% if selected_role == 'merchant' %}checked{% endif %}>
+                    <span class="role-card merchant">
+                        <img src="{{ url_for('static', filename='images/role-store.png') }}" alt="陪玩店">
+                        <div>
+                            <span class="role-chip">店铺入驻</span>
+                            <h2>陪玩店</h2>
+                            <p>打造店铺主页，管理接待与旗下陪玩，为玩家提供更稳定、更规范的服务。</p>
+                        </div>
+                    </span>
+                </label>
+            </section>
+
+            <div id="booster-fields" class="dynamic-fields-wrapper">
+                <section class="role-fields">
+                    <div class="role-field">
+                        <label for="booster_game_name">游戏名称（陪玩必填）</label>
+                        <input id="booster_game_name" name="game_name" placeholder="例如：英雄联盟 / 无畏契约">
+                    </div>
+                    <div class="role-field">
+                        <label for="booster_game_id">游戏 ID（陪玩必填）</label>
+                        <input id="booster_game_id" name="game_id" placeholder="例如：艾欧尼亚-123456">
+                    </div>
+                    <div class="role-field">
+                        <label for="booster_rank">当前段位（选填）</label>
+                        <input id="booster_rank" name="rank" placeholder="例如：王者 50 星">
+                    </div>
+                </section>
+
+                <section class="role-fields">
+                    <div class="role-field">
+                        <label for="booster_proof_image">段位/战绩截图（必传）</label>
+                        <input id="booster_proof_image" type="file" name="proof_image" accept=".png,.jpg,.jpeg,.webp,.gif">
+                    </div>
+                    <div class="role-field span-two">
+                        <label for="booster_intro">服务亮点（选填）</label>
+                        <input id="booster_intro" name="intro" placeholder="例如：擅长位置、常用英雄、接单时段">
+                    </div>
+                </section>
+            </div>
+
+            <div id="merchant-fields" class="dynamic-fields-wrapper">
+                <section class="role-fields">
+                    <div class="role-field">
+                        <label for="merchant_store_name">店铺名称（必填）</label>
+                        <input id="merchant_store_name" name="store_name" placeholder="例如：星河电竞接待中心">
+                    </div>
+                    <div class="role-field">
+                        <label for="merchant_store_city">所在城市（选填）</label>
+                        <input id="merchant_store_city" name="store_city" placeholder="例如：上海 / 线上">
+                    </div>
+                    <div class="role-field">
+                        <label for="merchant_business_license">营业执照/经营资质（必传）</label>
+                        <input id="merchant_business_license" type="file" name="business_license" accept=".png,.jpg,.jpeg,.webp,.gif">
+                    </div>
+                </section>
+
+                <section class="role-fields">
+                    <div class="role-field span-all">
+                        <label for="merchant_id_proof">经营者身份资料（必传）</label>
+                        <input id="merchant_id_proof" type="file" name="id_proof" accept=".png,.jpg,.jpeg,.webp,.gif">
+                    </div>
+                </section>
+            </div>
+
+            <div class="role-submit">
+                <a href="{{ url_for('login') }}">返回登录</a>
+                <button type="submit" id="submit-btn">完成并进入平台</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const roleInputs = document.querySelectorAll('input[name="role"]');
+        const boosterFields = document.getElementById('booster-fields');
+        const merchantFields = document.getElementById('merchant-fields');
+        const submitBtn = document.getElementById('submit-btn');
+
+        function updateFormVisibility() {
+            // 获取当前被选中的身份卡片
+            const selectedRoleInput = document.querySelector('input[name="role"]:checked');
+            const selectedRole = selectedRoleInput ? selectedRoleInput.value : 'player';
+
+            // 根据选中的身份，控制额外资料框的显示、隐藏以及按钮文字
+            if (selectedRole === 'booster') {
+                boosterFields.style.display = 'grid';
+                merchantFields.style.display = 'none';
+                submitBtn.textContent = '提交资料并等待审核';
+            } else if (selectedRole === 'merchant') {
+                boosterFields.style.display = 'none';
+                merchantFields.style.display = 'grid';
+                submitBtn.textContent = '提交入驻并等待审核';
+            } else {
+                // 如果是 Player，保持页面清爽，全部隐藏
+                boosterFields.style.display = 'none';
+                merchantFields.style.display = 'none';
+                submitBtn.textContent = '完成并进入平台';
+            }
+        }
+
+        // 给每个身份卡片装上监听器，点击即触发变化
+        roleInputs.forEach(input => {
+            input.addEventListener('change', updateFormVisibility);
+        });
+
+        // 页面刚加载时，执行一次检测，以防用户刷新页面
+        updateFormVisibility();
+    });
+</script>
+{% endblock %}

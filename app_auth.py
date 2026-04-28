@@ -1,0 +1,2 @@
+from routes.auth_routes import choose_role_view, forgot_password, login_view, register_view, waiting_approval_view
+app.add_url_rule('/waiting_approval', view_func=waiting_approval_view, endpoint='waiting_approval')

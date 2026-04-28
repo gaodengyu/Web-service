@@ -1,0 +1,11 @@
+<div class="sidebar-block">
+    <div class="sidebar-group">
+        <div class="sidebar-title">商家后台</div>
+        <a class="sidebar-link{% if active_page == 'merchant_home' %} is-active{% endif %}" href="{{ url_for('merchant_home') }}">接待大厅</a>
+        <a class="sidebar-link{% if active_page == 'merchant_store' %} is-active{% endif %}" href="{{ url_for('merchant_store') }}">店铺资料</a>
+        <a class="sidebar-link{% if active_page == 'merchant_talents' %} is-active{% endif %}" href="{{ url_for('merchant_talents') }}">店内陪玩师</a>
+        {% if store %}
+            <a class="sidebar-link" href="{{ url_for('store_detail', store_slug=store.slug) }}">公开店铺页</a>
+        {% endif %}
+    </div>
+</div>

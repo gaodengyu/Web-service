@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+{% block title %}登录 / 注册 | GameBuddy{% endblock %}
+{% block head_extra %}
+<style>
+    .dock,
+    .topbar,
+    .footer-note {
+        display: none;
+    }
+
+    .app-shell {
+        grid-template-columns: 1fr;
+        gap: 0;
+        padding: 0;
+        min-height: 100vh;
+        background: #f3fbef;
+    }
+
+    .app-frame {
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
+    }
+
+    .workspace,
+    .page,
+    .workspace-main {
+        min-height: 100vh;
+    }
+
+    .workspace-main {
+        padding: 0;
+    }
+
+    .page {
+        gap: 0;
+    }
+
+    .flash-stack {
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        z-index: 20;
+        width: min(360px, calc(100vw - 24px));
+    }
+
+    .auth-shell {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        padding: clamp(18px, 4vw, 40px);
+        overflow: hidden;
+    }
+
+    .auth-background {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        background: linear-gradient(135deg, #f2fae8 0%, #eef8f2 100%);
+    }
+
+    .auth-background img {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        display: block;
+        width: auto;
+        height: auto;
+        max-width: min(100vw, 1536px);
+        max-height: 100vh;
+        transform: translateY(-50%);
+    }
+
+    .auth-panel {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 448px);
+        margin-right: clamp(12px, 5vw, 72px);
+    }
+
+    .auth-card {
+        width: 100%;
+        padding: 30px 28px 24px;
+        border-radius: 30px;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(35, 65, 81, 0.08);
+        box-shadow: 0 30px 72px rgba(73, 121, 95, 0.16);
+        backdrop-filter: blur(8px);
+    }
+
+    .auth-card-header {
+        margin-bottom: 18px;
+        text-align: center;
+    }
+
+    .auth-card-header h1 {
+        margin: 0;
+        color: #27445f;
+        font-size: clamp(1.9rem, 2vw, 2.35rem);
+        line-height: 1.05;
+        letter-spacing: -0.04em;
+    }
+
+    .auth-card-header p {
+        margin-top: 10px;
+        color: #6d8190;
+        line-height: 1.65;
+    }
+
+    .auth-card-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .auth-form-grid,
+    .auth-register-grid {
+        display: grid;
+        gap: 12px;
+    }
+
+    .auth-register-grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .auth-form-grid label,
+    .auth-register-grid label {
+        display: block;
+        margin-bottom: 8px;
+        color: #35536a;
+        font-size: 0.92rem;
+        font-weight: 700;
+    }
+
+    .auth-form-grid input,
+    .auth-register-grid input {
+        width: 100%;
+        padding: 12px 13px;
+        border-radius: 12px;
+        border: 1px solid #dfe9e3;
+        background: #fbfdfb;
+        color: #1e3444;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .auth-form-grid input:focus,
+    .auth-register-grid input:focus {
+        outline: none;
+        border-color: rgba(49, 186, 95, 0.44);
+        box-shadow: 0 0 0 4px rgba(101, 215, 87, 0.12);
+    }
+
+    .auth-register-footnote {
+        margin-top: 12px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: #f4fbf4;
+        border: 1px solid #e2ede4;
+        color: #627683;
+        font-size: 0.88rem;
+        line-height: 1.65;
+    }
+
+    .auth-inline-links {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-top: 12px;
+        color: #6d8190;
+        font-size: 0.88rem;
+    }
+
+    .auth-inline-links a {
+        color: #1d8f5c;
+        font-weight: 700;
+    }
+
+    .auth-card-links {
+        margin-top: 18px;
+        padding-top: 18px;
+        border-top: 1px solid #e7efea;
+    }
+
+    .auth-card-links a {
+        flex: 1 1 calc(50% - 5px);
+        min-height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        border: 1px solid #e0e8e2;
+        background: #f4f8f6;
+        color: #4e6678;
+        font-weight: 700;
+    }
+
+    .auth-card-links a.primary {
+        background: linear-gradient(135deg, #1d8f5c, #67d756);
+        border-color: transparent;
+        color: #fff;
+    }
+
+    @media (max-width: 1180px) {
+        .auth-shell {
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 24px;
+        }
+
+        .auth-panel {
+            margin-right: 0;
+        }
+
+        .auth-card {
+            box-shadow: 0 24px 56px rgba(73, 121, 95, 0.14);
+        }
+    }
+
+    @media (max-width: 680px) {
+        .auth-shell {
+            padding: 16px;
+            align-items: flex-end;
+        }
+
+        .auth-card {
+            padding: 24px 18px 18px;
+            border-radius: 24px;
+        }
+
+        .auth-card-links a {
+            flex-basis: 100%;
+        }
+
+        .auth-inline-links {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .auth-register-grid.two {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-aspect-ratio: 4/3) {
+        .auth-background img {
+            left: 50%;
+            max-width: 100vw;
+            width: min(100vw, 1536px);
+            height: auto;
+            max-height: none;
+            transform: translate(-50%, -50%);
+        }
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="auth-shell">
+    <div class="auth-background" aria-hidden="true">
+        <img src="{{ launch_image_url }}" alt="">
+    </div>
+
+    <aside class="auth-panel">
+        {% if active_panel == 'register' %}
+            <section class="auth-card">
+                <div class="auth-card-header">
+                    <h1>注册账号</h1>
+                    <p>ID 与密码必填，邮箱选填。</p>
+                </div>
+
+                <form method="post" action="{{ url_for('register') }}" class="auth-register-grid">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div>
+                        <label for="register_email">邮箱</label>
+                        <input id="register_email" type="email" name="email" placeholder="选填，用于接收审核通知">
+                    </div>
+                    <div>
+                        <label for="register_username">ID</label>
+                        <input id="register_username" name="username" placeholder="必填，作为登录 ID" required>
+                    </div>
+                    <div class="auth-register-grid two">
+                        <div>
+                            <label for="register_pwd">密码</label>
+                            <input id="register_pwd" type="password" name="pwd" placeholder="至少 8 位，包含字母和数字" required>
+                        </div>
+                        <div>
+                            <label for="confirm_pwd">确认密码</label>
+                            <input id="confirm_pwd" type="password" name="confirm_pwd" placeholder="再次输入密码" required>
+                        </div>
+                    </div>
+                    <button type="submit">注册并继续</button>
+                </form>
+
+                <div class="auth-register-footnote">注册完成后会继续选择身份。若商家/陪玩师未填邮箱，可在登录页用用户名与密码查询审核进度。</div>
+
+                <div class="auth-card-links">
+                    <a class="primary" href="{{ url_for('login') }}">返回登录</a>
+                    <a href="{{ url_for('merchant_application_status') }}">商家/打手申请进度</a>
+                    <a href="{{ url_for('boosters_list') }}">先逛广场</a>
+                </div>
+            </section>
+        {% else %}
+            <section class="auth-card">
+                <div class="auth-card-header">
+                    <h1>欢迎来到 GameBuddy</h1>
+                    <p>输入用户名/ID 与密码可直接登录；审核中的商家/陪玩师会自动跳转到申请状态页。</p>
+                </div>
+
+                <form method="post" action="{{ url_for('login') }}" class="auth-form-grid">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div>
+                        <label for="login_email">用户名 / ID / 邮箱</label>
+                        <input id="login_email" name="identifier" placeholder="输入用户名、ID 或邮箱" required>
+                    </div>
+                    <div>
+                        <label for="login_pwd">密码</label>
+                        <input id="login_pwd" type="password" name="pwd" placeholder="请输入登录密码" required>
+                    </div>
+                    <button type="submit">登录</button>
+                </form>
+                <div class="auth-inline-links">
+                    <span>商家/陪玩师审核阶段可用用户名与密码查看状态。</span>
+                    <a href="{{ url_for('forgot_password') }}">忘记密码</a>
+                </div>
+
+                <div class="auth-card-links">
+                    <a class="primary" href="{{ url_for('register') }}">注册账号</a>
+                    <a href="{{ url_for('merchant_application_status') }}">商家/打手申请进度</a>
+                    <a href="{{ url_for('boosters_list') }}">先逛广场</a>
+                </div>
+            </section>
+        {% endif %}
+    </aside>
+</div>
+{% endblock %}

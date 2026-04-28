@@ -1,0 +1,17 @@
+from routes.storefront_routes import (
+    admin_users_storefront,
+    booster_home_storefront,
+    booster_orders_storefront,
+    booster_profile_storefront,
+    boosters_list_storefront,
+    choose_role_storefront,
+    contact_store_storefront,
+    create_order_storefront,
+    home_storefront,
+    merchant_home_storefront,
+    merchant_store_storefront,
+    merchant_talents_storefront,
+    player_home_storefront,
+    player_orders_storefront,
+    store_detail_storefront,
+)

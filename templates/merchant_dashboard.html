@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}商家后台 | GameBuddy{% endblock %}
+
+{% block page_sidebar %}
+    {% set active_page = 'merchant_home' %}
+    {% include '_merchant_sidebar.html' %}
+    <div class="sidebar-group">
+        <div class="sidebar-title">当前状态</div>
+        <div class="list">
+            <div class="list-item">
+                <strong>{{ store.review_label if store else '待完善' }}</strong>
+                <p>{{ store.review_note if store and store.review_note else '完成资料后可提交管理员审核。' }}</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+{% if not store %}
+    <section class="hero">
+        <div class="hero-copy">
+            <span class="eyebrow">Merchant Onboarding</span>
+            <h1>先把店铺资料搭起来</h1>
+            <p>你已经拥有商家账号，下一步先创建店铺，再提交店铺和店内陪玩师资料给管理员审核。</p>
+            <div class="cta-row">
+                <a class="button-link" href="{{ url_for('merchant_store') }}">立即创建店铺</a>
+            </div>
+        </div>
+    </section>
+{% else %}
+    <section class="hero">
+        <div class="hero-copy">
+            <span class="eyebrow">Reception Hall</span>
+            <h1>{{ store.name }}</h1>
+            <p>{{ store.tagline or store.description or '店铺接待统一承接玩家需求，再把订单分配给店内陪玩师。' }}</p>
+            <div class="pill-row">
+                <span class="kpi-pill">{{ store.review_label }}</span>
+                <span class="kpi-pill">{{ store.booster_count }} 位陪玩师</span>
+                <span class="kpi-pill">{{ store.pending_talent_count }} 个待审核申请</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="grid four" style="margin-top: 18px;">
+        <section class="surface stat-card"><span class="stat-label">店内陪玩师</span><div class="stat-value">{{ stats.booster_count }}</div><p>全部归属当前店铺。</p></section>
+        <section class="surface stat-card"><span class="stat-label">进行中订单</span><div class="stat-value">{{ stats.pending_orders }}</div><p>接待大厅和服务中的订单总数。</p></section>
+        <section class="surface stat-card"><span class="stat-label">完成订单</span><div class="stat-value">{{ stats.completed_orders }}</div><p>已经完成并确认的订单。</p></section>
+        <section class="surface stat-card"><span class="stat-label">店铺均分</span><div class="stat-value">{{ stats.avg_rating or '新店' }}</div><p>按店内陪玩师和订单表现汇总。</p></section>
+    </div>
+
+    <section class="surface" style="margin-top: 18px;">
+        <div class="section-title">
+            <h2>接待大厅订单</h2>
+            <span class="muted">玩家下单后会先来到这里，由你安排陪玩师</span>
+        </div>
+        {% if orders %}
+            <div class="list">
+                {% for order in orders %}
+                    <article class="list-item">
+                        <div class="list-item-header">
+                            <div>
+                                <h3>#{{ order.id }} · {{ order.player }}</h3>
+                                <p>{{ order.game }} / {{ order.service_type or '标准服务' }}</p>
+                            </div>
+                            <div class="pill-row">
+                                <span class="badge {{ order_status_class(order.status) }}">{{ order.status }}</span>
+                                <span class="badge {{ payment_status_class(order.payment_status) }}">{{ order.payment_status }}</span>
+                            </div>
+                        </div>
+                        <div class="kpi-row">
+                            <span class="kpi-pill">目标：{{ order.target_rank or '未填写' }}</span>
+                            <span class="kpi-pill">时长：{{ order.duration or '未填写' }}</span>
+                            <span class="kpi-pill">当前分配：{{ order.booster_label }}</span>
+                        </div>
+                        <p>{{ order.detail }}</p>
+
+                        {% if order.status in ['待接待', '已取消'] %}
+                            <form method="post" class="form-grid">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <input type="hidden" name="order_id" value="{{ order.id }}">
+                                <input type="hidden" name="action" value="assign_booster">
+                                <div class="form-grid two">
+                                    <div>
+                                        <label>分配陪玩师</label>
+                                        <select name="booster_username" required>
+                                            <option value="">请选择店内陪玩师</option>
+                                            {% for booster in boosters %}
+                                                <option value="{{ booster.username }}">{{ booster.display_name }} / {{ booster.profile.rank or '段位待补充' }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="button-row" style="align-self: end;">
+                                        <button type="submit">分配并开始服务</button>
+                                    </div>
+                                </div>
+                            </form>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">接待大厅暂时没有待处理订单。</div>
+        {% endif %}
+    </section>
+
+    <div class="split" style="margin-top: 18px;">
+        <section class="surface">
+            <div class="section-title">
+                <h2>店内陪玩师</h2>
+                <a class="muted" href="{{ url_for('merchant_talents') }}">处理入驻申请</a>
+            </div>
+            <div class="list">
+                {% for booster in boosters %}
+                    <article class="list-item">
+                        <div class="list-item-header">
+                            <div>
+                                <h3>{{ booster.display_name }}</h3>
+                                <p>{{ booster.profile.rank or '段位待补充' }}</p>
+                            </div>
+                            <span class="badge badge-soft-success">已通过</span>
+                        </div>
+                        <p>{{ booster.profile.play_style or booster.profile.intro or '资料待完善。' }}</p>
+                    </article>
+                {% else %}
+                    <div class="empty-state">店里还没有已通过审核的陪玩师。</div>
+                {% endfor %}
+            </div>
+        </section>
+        <section class="surface">
+            <div class="section-title">
+                <h2>最新通知</h2>
+            </div>
+            <div class="list">
+                {% for notif in notifications %}
+                    <article class="list-item">
+                        <div class="list-item-header">
+                            <strong>{{ notif.sender }}</strong>
+                            <span class="muted">{{ notif.timestamp }}</span>
+                        </div>
+                        <p>{{ notif.message }}</p>
+                    </article>
+                {% else %}
+                    <div class="empty-state">还没有新的通知。</div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+{% endif %}
+{% endblock %}

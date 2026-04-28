@@ -1,0 +1,34 @@
+name: Python CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: "ci-test-secret"
+      FLASK_ENV: "testing"
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: Install dependencies and run tests
+      run: |
+        cd gamebuddy-main/Web-service-master
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+        # Run tests only under the tests/ directory to avoid import name conflicts
+        python -m pytest tests --maxfail=1 --disable-warnings --cov=. --cov-report=xml:coverage.xml
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: gamebuddy-main/Web-service-master/coverage.xml

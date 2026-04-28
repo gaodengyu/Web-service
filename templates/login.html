@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}登录 | GameBuddy{% endblock %}
+{% block content %}
+<div class="split">
+    <section class="hero">
+        <div class="hero-copy">
+            <span class="eyebrow">Welcome Back</span>
+            <h1>登录后进入你的专属工作台</h1>
+            <p>玩家可以快速下单和跟踪进度，陪玩师可以处理订单和维护资料，管理员则能统一查看平台运营数据与投诉状态。</p>
+            <div class="kpi-row">
+                <span class="kpi-pill">玩家端：找人更快</span>
+                <span class="kpi-pill">陪玩师端：接单更稳</span>
+                <span class="kpi-pill">后台端：处理更清晰</span>
+            </div>
+        </div>
+    </section>
+    <section class="surface">
+        <div class="section-title">
+            <h2>账号登录</h2>
+        </div>
+        <form method="post" class="form-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div>
+                <label for="username">用户名</label>
+                <input id="username" name="username" placeholder="输入玩家名 / 陪玩师名 / 商家名 / 管理员名" required>
+            </div>
+            <div>
+                <label for="pwd">密码</label>
+                <input id="pwd" type="password" name="pwd" placeholder="请输入密码" required>
+            </div>
+            <button type="submit">进入平台</button>
+        </form>
+        <p style="margin-top: 14px;">还没有账号？<a href="{{ url_for('register') }}" style="color: var(--accent);">立即注册</a></p>
+    </section>
+</div>
+{% endblock %}

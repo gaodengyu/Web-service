@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}发送通知 | GameBuddy{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">Messaging</span>
+        <h1>向指定用户发送平台通知</h1>
+        <p>除了自动通知，平台也支持手动推送客服消息、活动提醒和风险告知。</p>
+    </div>
+</section>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>发送平台通知</h2>
+    </div>
+    <form method="post" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div>
+            <label for="receiver">接收者</label>
+            <select id="receiver" name="receiver" required>
+                <option value="">请选择用户</option>
+                {% for user in users %}
+                    <option value="{{ user.username }}">{{ user.username }}（{{ user.role }}）</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="message">通知内容</label>
+            <textarea id="message" name="message" placeholder="输入要发送的消息内容" required></textarea>
+        </div>
+        <div class="button-row">
+            <button type="submit">发送通知</button>
+            <a class="button-link secondary" href="{{ url_for('admin_home') }}">返回总览</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

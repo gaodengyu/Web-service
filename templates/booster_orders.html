@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}陪玩师订单台 | GameBuddy{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">Service Workflow</span>
+        <h1>处理店铺分配给你的订单</h1>
+        <p>陪玩师不再单独接单。订单由店铺接待大厅分配到你这里后，你只需要处理服务和完结进度。</p>
+    </div>
+</section>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>我的订单</h2>
+    </div>
+    {% if orders %}
+        <div class="list">
+            {% for order in orders %}
+                <article class="list-item">
+                    <div class="list-item-header">
+                        <div>
+                            <h3>#{{ order.id }} · {{ order.player }}</h3>
+                            <p>{{ order.store_label }} / {{ order.game }}</p>
+                        </div>
+                        <div class="pill-row">
+                            <span class="badge {{ order_status_class(order.status) }}">{{ order.status }}</span>
+                            <span class="badge {{ payment_status_class(order.payment_status) }}">{{ order.payment_status }}</span>
+                        </div>
+                    </div>
+                    <div class="kpi-row">
+                        <span class="kpi-pill">目标：{{ order.target_rank or '未填写' }}</span>
+                        <span class="kpi-pill">时长：{{ order.duration or '未填写' }}</span>
+                        <span class="kpi-pill">预约时间：{{ order.preferred_time or '未填写' }}</span>
+                    </div>
+                    <p>{{ order.detail }}</p>
+
+                    {% if order.rating %}
+                        <div class="list-item">
+                            <strong>玩家评价</strong>
+                            <p>{{ order.rating }} 星{% if order.comment %} · {{ order.comment }}{% endif %}</p>
+                        </div>
+                    {% endif %}
+
+                    {% if order.complaint %}
+                        <div class="list-item">
+                            <strong>投诉状态</strong>
+                            <p>{{ order.complaint }}</p>
+                            <p>当前：{{ order.complaint_status }}{% if order.complaint_reply %} · {{ order.complaint_reply }}{% endif %}</p>
+                        </div>
+                    {% endif %}
+
+                    <div class="button-row">
+                        {% if order.status == '已接单' %}
+                            <form method="post">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <input type="hidden" name="order_id" value="{{ order.id }}">
+                                <input type="hidden" name="action" value="reject">
+                                <button type="submit" class="danger">退回接待大厅</button>
+                            </form>
+                            <form method="post">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <input type="hidden" name="order_id" value="{{ order.id }}">
+                                <input type="hidden" name="action" value="finish">
+                                <button type="submit" class="success">标记待确认完成</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">当前没有需要处理的订单。</div>
+    {% endif %}
+</section>
+{% endblock %}

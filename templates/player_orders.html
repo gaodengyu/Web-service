@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}我的订单 | GameBuddy{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">Order Center</span>
+        <h1>跟进每一笔接待大厅订单</h1>
+        <p>在这里查看店铺接待状态、陪玩师分配结果、支付状态、完成确认、评价和投诉处理结果。</p>
+    </div>
+</section>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>全部订单</h2>
+        <a class="muted" href="{{ url_for('boosters_list') }}">继续逛店铺</a>
+    </div>
+    {% if orders %}
+        <div class="list">
+            {% for order in orders %}
+                <article class="list-item">
+                    <div class="list-item-header">
+                        <div>
+                            <h3>#{{ order.id }} · {{ order.store_label }}</h3>
+                            <p>{{ order.game }} / {{ order.service_type or '标准服务' }}</p>
+                        </div>
+                        <div class="pill-row">
+                            <span class="badge {{ order_status_class(order.status) }}">{{ order.status }}</span>
+                            <span class="badge {{ payment_status_class(order.payment_status) }}">{{ order.payment_status }}</span>
+                            <span class="badge {{ complaint_status_class(order.complaint_status) }}">{{ order.complaint_status }}</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-row">
+                        <span class="kpi-pill">目标：{{ order.target_rank or '未填写' }}</span>
+                        <span class="kpi-pill">时长：{{ order.duration or '未填写' }}</span>
+                        <span class="kpi-pill">时间：{{ order.preferred_time or '未填写' }}</span>
+                        <span class="kpi-pill">价格：¥{{ order.price or '--' }}</span>
+                    </div>
+                    <p>{{ order.detail }}</p>
+                    <div class="pill-row">
+                        <span class="kpi-pill">接待分配：{{ order.booster_label }}</span>
+                    </div>
+
+                    {% if order.rating %}
+                        <div class="list-item">
+                            <strong>我的评价</strong>
+                            <p>{{ order.rating }} 星{% if order.comment %} · {{ order.comment }}{% endif %}</p>
+                        </div>
+                    {% endif %}
+
+                    {% if order.complaint %}
+                        <div class="list-item">
+                            <strong>投诉内容</strong>
+                            <p>{{ order.complaint }}</p>
+                            {% if order.complaint_reply %}
+                                <p>管理员回复：{{ order.complaint_reply }}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    <div class="button-row">
+                        {% if order.status == '待接待' %}
+                            <form method="post">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <input type="hidden" name="order_id" value="{{ order.id }}">
+                                <input type="hidden" name="action" value="cancel">
+                                <button type="submit" class="secondary">取消订单</button>
+                            </form>
+                        {% endif %}
+
+                        {% if order.status == '待确认完成' %}
+                            <form method="post">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <input type="hidden" name="order_id" value="{{ order.id }}">
+                                <input type="hidden" name="action" value="confirm_complete">
+                                <button type="submit" class="success">确认完成</button>
+                            </form>
+                        {% endif %}
+                    </div>
+
+                    {% if order.status == '已完成' and not order.rating %}
+                        <form method="post" class="form-grid">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="order_id" value="{{ order.id }}">
+                            <input type="hidden" name="action" value="rate">
+                            <div class="form-grid two">
+                                <div>
+                                    <label>评分</label>
+                                    <select name="rating" required>
+                                        <option value="5">5 星</option>
+                                        <option value="4">4 星</option>
+                                        <option value="3">3 星</option>
+                                        <option value="2">2 星</option>
+                                        <option value="1">1 星</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label>评价内容</label>
+                                    <input name="comment" placeholder="可以填写体验反馈">
+                                </div>
+                            </div>
+                            <div class="button-row">
+                                <button type="submit">提交评价</button>
+                            </div>
+                        </form>
+                    {% endif %}
+
+                    {% if not order.complaint %}
+                        <form method="post" class="form-grid">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <input type="hidden" name="order_id" value="{{ order.id }}">
+                            <input type="hidden" name="action" value="complain">
+                            <div>
+                                <label>提交投诉</label>
+                                <textarea name="complaint" placeholder="描述未按约定履约、态度问题或其他争议"></textarea>
+                            </div>
+                            <div class="button-row">
+                                <button type="submit" class="warning">发起投诉</button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">还没有订单记录，去发现页找一家陪玩店开始第一单吧。</div>
+    {% endif %}
+</section>
+{% endblock %}

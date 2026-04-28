@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GameBuddy{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --bg-elevated: #ffffff;
+            --panel: #ffffff;
+            --panel-2: #f8fafc;
+            --panel-3: #f1f5f9;
+            --line: rgba(15, 23, 42, 0.12);
+            --line-strong: rgba(15, 23, 42, 0.18);
+            --text: #0f172a;
+            --muted: #475569;
+            --muted-2: #64748b;
+            --accent: #2563eb;
+            --accent-strong: #3b82f6;
+            --accent-rgb: 37 99 235;
+            --accent-soft: rgba(var(--accent-rgb), 0.14);
+            --blue: #2563eb;
+            --rose: #db2777;
+            --orange: #ea580c;
+            --purple: #6366f1;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --radius-sm: 12px;
+            --radius-lg: 22px;
+            --radius-md: 16px;
+            --radius-xl: 28px;
+            --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 1px rgba(15, 23, 42, 0.04);
+            --shadow-2: 0 10px 30px rgba(15, 23, 42, 0.08);
+            --shadow-3: 0 22px 64px rgba(15, 23, 42, 0.12);
+            --shadow: var(--shadow-2);
+            --dock-button: 54px;
+            --dock-button-radius: 18px;
+            --dock-icon: 22px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            background: radial-gradient(circle at top right, rgba(var(--accent-rgb), 0.08), transparent 26%), var(--bg);
+            color: var(--text);
+            font-family: "Inter", "Noto Sans SC", sans-serif;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button,
+        input,
+        textarea,
+        select {
+            font: inherit;
+        }
+
+        .app-shell {
+            display: grid;
+            grid-template-columns: 88px minmax(0, 1fr);
+            min-height: 100vh;
+            gap: 18px;
+            padding: 16px;
+        }
+
+        .dock {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 10px;
+            border-radius: var(--radius-xl);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 250, 252, 0.92));
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow-1);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 16px;
+            height: calc(100vh - 32px);
+        }
+
+        .dock > .dock-brand,
+        .dock > .dock-stack,
+        .dock > .dock-profile {
+            display: none;
+        }
+
+        .dock-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .dock-servers {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 2px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(15, 23, 42, 0.18) transparent;
+        }
+
+        .dock-servers::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .dock-servers::-webkit-scrollbar-thumb {
+            background: rgba(15, 23, 42, 0.16);
+            border-radius: 999px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        .dock-servers::-webkit-scrollbar-thumb:hover {
+            background: rgba(15, 23, 42, 0.24);
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        .dock-divider {
+            width: 38px;
+            height: 1px;
+            border-radius: 999px;
+            background: var(--line-strong);
+            flex-shrink: 0;
+        }
+
+        .dock-link {
+            position: relative;
+            width: var(--dock-button);
+            height: var(--dock-button);
+            border-radius: var(--dock-button-radius);
+            display: grid;
+            place-items: center;
+            color: var(--muted);
+            background: rgba(15, 23, 42, 0.03);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+            transition: transform 180ms ease, background 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .dock-link::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(120px circle at 30% 20%, rgba(var(--accent-rgb), 0.16), rgba(255, 255, 255, 0.0) 62%);
+            opacity: 0;
+            transition: opacity 180ms ease;
+            pointer-events: none;
+        }
+
+        .dock-link:hover {
+            transform: translateY(-2px) scale(1.02);
+            color: var(--text);
+            background: rgba(15, 23, 42, 0.05);
+            border-color: rgba(15, 23, 42, 0.14);
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        .dock-link:hover::before {
+            opacity: 1;
+        }
+
+        .dock-link.is-active {
+            color: var(--text);
+            background: radial-gradient(130px circle at 30% 18%, rgba(var(--accent-rgb), 0.16), rgba(var(--accent-rgb), 0.08) 55%, rgba(255, 255, 255, 0.7));
+            border-color: rgba(var(--accent-rgb), 0.38);
+            box-shadow: 0 18px 40px rgba(var(--accent-rgb), 0.16), inset 0 0 0 1px rgba(var(--accent-rgb), 0.12);
+        }
+
+        .dock-link.is-active::before {
+            opacity: 1;
+            background: radial-gradient(140px circle at 30% 20%, rgba(var(--accent-rgb), 0.22), rgba(255, 255, 255, 0.0) 64%);
+        }
+
+        .dock-link:not(.server).is-active::after {
+            content: "";
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: rgba(var(--accent-rgb), 0.92);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 10px 18px rgba(var(--accent-rgb), 0.18);
+        }
+
+        .dock-link:focus-visible {
+            outline: none;
+            color: var(--text);
+            border-color: rgba(var(--accent-rgb), 0.42);
+            box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.16), 0 14px 30px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+        }
+
+        .dock-icon {
+            width: var(--dock-icon);
+            height: var(--dock-icon);
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            opacity: 0.92;
+            filter: drop-shadow(0 10px 14px rgba(15, 23, 42, 0.18));
+        }
+
+        .dock-link.is-active .dock-icon {
+            opacity: 1;
+        }
+
+        .dock-link.server {
+            background: rgba(15, 23, 42, 0.06);
+        }
+
+        .dock-link.server img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .dock-link.is-ghost {
+            background: rgba(15, 23, 42, 0.02);
+        }
+
+        .dock-glyph {
+            font-size: 1.04rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-shadow: 0 10px 18px rgba(0, 0, 0, 0.28);
+        }
+
+        .dock-label {
+            max-width: 38px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            line-height: 1.05;
+            text-align: center;
+            letter-spacing: 0.04em;
+        }
+
+        .dock-footer {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dock-profile {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            background: radial-gradient(circle at 30% 25%, #ffffff, rgba(var(--accent-rgb), 0.26) 52%, rgba(var(--accent-rgb), 0.8) 100%);
+            color: #111317;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: var(--shadow-2);
+        }
+
+        .app-frame {
+            min-width: 0;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.98));
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.76);
+            backdrop-filter: blur(10px);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .topbar-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            white-space: nowrap;
+        }
+
+        .topbar-subtitle {
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .search-shell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: min(340px, 42vw);
+            padding: 12px 14px;
+            border-radius: var(--radius-md);
+            background: rgba(15, 23, 42, 0.03);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            color: var(--muted);
+        }
+
+        .search-shell input {
+            border: 0;
+            outline: none;
+            width: 100%;
+            padding: 0;
+            background: transparent;
+            color: var(--text);
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            min-height: calc(100vh - 96px);
+        }
+
+        .workspace.has-sidebar {
+            grid-template-columns: 230px minmax(0, 1fr);
+        }
+
+        .workspace-sidebar {
+            padding: 18px 14px;
+            border-right: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.76);
+        }
+
+        .workspace-main {
+            min-width: 0;
+            padding: 18px;
+        }
+
+        .sidebar-block {
+            display: grid;
+            gap: 16px;
+        }
+
+        .sidebar-group {
+            display: grid;
+            gap: 6px;
+        }
+
+        .sidebar-title {
+            font-size: 0.84rem;
+            color: var(--muted-2);
+            padding: 0 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .sidebar-link,
+        .sidebar-chip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            color: var(--muted);
+            transition: all 160ms ease;
+        }
+
+        .sidebar-game-icon-wrap {
+            width: 22px;
+            height: 22px;
+            border-radius: 7px;
+            display: grid;
+            place-items: center;
+            background: rgba(15, 23, 42, 0.04);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            flex-shrink: 0;
+        }
+
+        .sidebar-game-icon {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.22));
+        }
+
+        .sidebar-link:hover,
+        .sidebar-chip:hover {
+            background: rgba(15, 23, 42, 0.04);
+            color: var(--text);
+        }
+
+        .sidebar-chip.is-active .sidebar-game-icon-wrap {
+            background: rgba(var(--accent-rgb), 0.12);
+            border-color: rgba(var(--accent-rgb), 0.22);
+        }
+
+        .sidebar-link.is-active,
+        .sidebar-chip.is-active {
+            background: rgba(var(--accent-rgb), 0.08);
+            color: var(--text);
+            box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.12);
+        }
+
+        .sidebar-badge {
+            margin-left: auto;
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            background: var(--accent-soft);
+            color: #1d4ed8;
+        }
+
+        .page {
+            display: grid;
+            gap: 18px;
+            animation: fadeUp 0.32s ease both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .surface,
+        .hero,
+        .market-panel {
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.98));
+            box-shadow: var(--shadow);
+        }
+
+        .surface,
+        .market-panel {
+            padding: 20px;
+        }
+
+        .hero {
+            padding: 24px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            right: -80px;
+            top: -40px;
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(var(--accent-rgb), 0.12), transparent 70%);
+        }
+
+        .hero-copy {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: 16px;
+            max-width: 760px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: #1d4ed8;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        h1, h2, h3, h4 {
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: clamp(1.8rem, 2.5vw, 2.8rem);
+            line-height: 1.1;
+        }
+
+        h2 {
+            font-size: 1.34rem;
+        }
+
+        h3 {
+            font-size: 1.02rem;
+        }
+
+        .market-card h3 {
+            color: #1e40af;
+        }
+
+        .market-card:hover h3 {
+            color: var(--accent);
+        }
+
+        p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .grid.two {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .grid.three {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .grid.four {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .split {
+            display: grid;
+            gap: 18px;
+            grid-template-columns: 1.45fr 1fr;
+        }
+
+        .stats-row {
+            display: grid;
+            gap: 14px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .stat-card {
+            display: grid;
+            gap: 8px;
+            padding: 18px;
+            border-radius: var(--radius-md);
+            background: rgba(15, 23, 42, 0.02);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+        }
+
+        .stat-label {
+            color: var(--muted-2);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .button-link,
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 0 16px;
+            border: 0;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(180deg, var(--accent-strong), var(--accent));
+            color: #ffffff;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 22px rgba(var(--accent-rgb), 0.18);
+            transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+        }
+
+        .button-link:hover,
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 34px rgba(var(--accent-rgb), 0.22);
+        }
+
+        .button-link:active,
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 10px 22px rgba(var(--accent-rgb), 0.16);
+        }
+
+        .button-link.secondary,
+        button.secondary {
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--text);
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            box-shadow: var(--shadow-1);
+        }
+
+        .button-link.secondary:hover,
+        button.secondary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-2);
+        }
+
+        .button-link.warning,
+        button.warning {
+            background: linear-gradient(180deg, #ffc27a, #ffad49);
+            color: #2f1800;
+        }
+
+        .button-link.danger,
+        button.danger {
+            background: linear-gradient(180deg, #ff8c8c, #ff6565);
+            color: #300606;
+        }
+
+        .button-link.success,
+        button.success {
+            background: linear-gradient(180deg, #7bf3c1, #47d496);
+            color: #032015;
+        }
+
+        .button-row,
+        .cta-row,
+        .pill-row,
+        .kpi-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .badge,
+        .chip,
+        .kpi-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 7px 11px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+        }
+
+        .badge-soft-warning { background: rgba(234, 88, 12, 0.12); color: #9a3412; }
+        .badge-soft-info { background: rgba(var(--accent-rgb), 0.12); color: #1d4ed8; }
+        .badge-soft-primary { background: rgba(99, 102, 241, 0.12); color: #4338ca; }
+        .badge-soft-success { background: rgba(22, 163, 74, 0.12); color: #166534; }
+        .badge-soft-danger { background: rgba(220, 38, 38, 0.12); color: #991b1b; }
+        .badge-soft-muted { background: rgba(100, 116, 139, 0.12); color: #334155; }
+
+        .kpi-pill {
+            background: rgba(15, 23, 42, 0.03);
+            color: #334155;
+        }
+
+        .chip {
+            background: rgba(15, 23, 42, 0.03);
+            color: #334155;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+        }
+
+        .chip.is-active {
+            background: rgba(var(--accent-rgb), 0.12);
+            color: #1d4ed8;
+            border-color: rgba(var(--accent-rgb), 0.18);
+        }
+
+        .list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .list-item {
+            display: grid;
+            gap: 10px;
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            background: rgba(15, 23, 42, 0.02);
+        }
+
+        .list-item-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 14px;
+        }
+
+        .form-grid.two {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 13px;
+            border-radius: 12px;
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--text);
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: rgba(var(--accent-rgb), 0.38);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .flash-stack {
+            display: grid;
+            gap: 10px;
+        }
+
+        .flash {
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+        }
+
+        .flash.success { background: rgba(22, 163, 74, 0.1); color: #14532d; }
+        .flash.info { background: rgba(var(--accent-rgb), 0.1); color: #1e40af; }
+        .flash.warning { background: rgba(234, 88, 12, 0.1); color: #7c2d12; }
+        .flash.danger { background: rgba(220, 38, 38, 0.1); color: #7f1d1d; }
+
+        .discover-board {
+            display: grid;
+            gap: 18px;
+        }
+
+        .discover-search {
+            max-width: 360px;
+        }
+
+        .game-row {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .game-tile {
+            display: grid;
+            gap: 10px;
+            padding: 18px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            background: rgba(255, 255, 255, 0.86);
+            transition: all 180ms ease;
+        }
+
+        .game-tile:hover,
+        .game-tile.is-active {
+            border-color: rgba(var(--accent-rgb), 0.3);
+            background: rgba(var(--accent-rgb), 0.06);
+        }
+
+        .game-icon {
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.04);
+            font-size: 1.1rem;
+        }
+
+        .market-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .market-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            background: #ffffff;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+            transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+        }
+
+        .market-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(340px 220px at 16% 0%, rgba(15, 23, 42, 0.06), rgba(255, 255, 255, 0.0) 62%),
+                radial-gradient(420px 260px at 100% 20%, rgba(var(--accent-rgb), 0.08), rgba(255, 255, 255, 0.0) 64%),
+                repeating-linear-gradient(0deg, rgba(15, 23, 42, 0.02), rgba(15, 23, 42, 0.02) 1px, transparent 1px, transparent 6px);
+            opacity: 0.36;
+            pointer-events: none;
+        }
+
+        .market-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 0;
+            box-shadow:
+                inset 0 0 0 1px rgba(var(--accent-rgb), 0.0),
+                0 0 0 0 rgba(var(--accent-rgb), 0.0),
+                0 0 0 0 rgba(99, 102, 241, 0.0);
+            transition: opacity 220ms ease;
+        }
+
+        .market-card:hover {
+            transform: translateY(-1px);
+            border-color: rgba(15, 23, 42, 0.18);
+            box-shadow: 0 14px 32px rgba(15, 23, 42, 0.1);
+        }
+
+        .market-card:hover::after {
+            opacity: 1;
+            box-shadow:
+                inset 0 0 0 1px rgba(var(--accent-rgb), 0.18),
+                0 14px 38px rgba(var(--accent-rgb), 0.12);
+        }
+
+        .market-cover {
+            position: relative;
+            min-height: 156px;
+            padding: 18px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            overflow: hidden;
+            isolation: isolate;
+        }
+
+        .market-cover::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(4px 4px at 18% 22%, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.0) 70%),
+                radial-gradient(3px 3px at 32% 58%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.0) 70%),
+                radial-gradient(2px 2px at 64% 36%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.0) 70%),
+                radial-gradient(3px 3px at 78% 18%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.0) 70%),
+                radial-gradient(2px 2px at 86% 62%, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.0) 70%),
+                radial-gradient(2px 2px at 12% 76%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.0) 70%),
+                radial-gradient(1.5px 1.5px at 46% 82%, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.0) 70%),
+                radial-gradient(1.5px 1.5px at 54% 14%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.0) 70%);
+            opacity: 0.18;
+            transform: translate3d(0, 0, 0);
+            animation: none;
+            filter: none;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .market-cover::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(closest-side at 30% 35%, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.0) 62%),
+                radial-gradient(closest-side at 90% 10%, rgba(var(--accent-rgb), 0.14), rgba(255, 255, 255, 0.0) 58%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(18, 20, 24, 0.22) 52%, rgba(18, 20, 24, 0.84));
+            z-index: 0;
+        }
+
+        .market-cover-sheen {
+            position: absolute;
+            inset: -20% -40%;
+            z-index: 0;
+            pointer-events: none;
+            background: linear-gradient(
+                112deg,
+                rgba(255, 255, 255, 0) 36%,
+                rgba(255, 255, 255, 0.22) 48%,
+                rgba(255, 255, 255, 0.08) 56%,
+                rgba(255, 255, 255, 0) 68%
+            );
+            transform: translateX(-120%) rotate(-8deg);
+            opacity: 0;
+            mix-blend-mode: screen;
+        }
+
+        .market-card:hover .market-cover-sheen {
+            animation: coverSheenSweep 900ms cubic-bezier(0.22, 0.7, 0.2, 1) both;
+        }
+
+        @keyframes coverParticles {
+            0% {
+                transform: translate3d(0, 10px, 0);
+                opacity: 0.32;
+            }
+            50% {
+                transform: translate3d(0, -6px, 0);
+                opacity: 0.46;
+            }
+            100% {
+                transform: translate3d(0, 10px, 0);
+                opacity: 0.32;
+            }
+        }
+
+        @keyframes coverSheenSweep {
+            0% {
+                transform: translateX(-120%) rotate(-8deg);
+                opacity: 0;
+            }
+            16% {
+                opacity: 0.85;
+            }
+            70% {
+                opacity: 0.42;
+            }
+            100% {
+                transform: translateX(120%) rotate(-8deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes cardNeonPulse {
+            0% {
+                box-shadow:
+                    inset 0 0 0 1px rgba(var(--accent-rgb), 0.18),
+                    0 0 0 0 rgba(var(--accent-rgb), 0.0),
+                    0 0 0 0 rgba(99, 102, 241, 0.0);
+            }
+            50% {
+                box-shadow:
+                    inset 0 0 0 1px rgba(var(--accent-rgb), 0.28),
+                    0 0 18px 1px rgba(var(--accent-rgb), 0.18),
+                    0 0 30px 2px rgba(99, 102, 241, 0.14);
+            }
+            100% {
+                box-shadow:
+                    inset 0 0 0 1px rgba(var(--accent-rgb), 0.16),
+                    0 0 8px 0 rgba(var(--accent-rgb), 0.1),
+                    0 0 16px 0 rgba(99, 102, 241, 0.08);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .market-cover::before {
+                animation: none;
+            }
+
+            .market-card:hover .market-cover-sheen {
+                animation: none;
+            }
+
+            .market-card:hover::after {
+                animation: none;
+                box-shadow:
+                    inset 0 0 0 1px rgba(var(--accent-rgb), 0.22),
+                    0 0 14px 0 rgba(var(--accent-rgb), 0.12);
+            }
+        }
+
+        .market-cover.theme-rose {
+            background: linear-gradient(135deg, #ffc1d5, #ff7ca8 42%, #8d4568 100%);
+        }
+
+        .market-cover.theme-sky {
+            background: linear-gradient(135deg, #d2ebff, #8ac8ff 42%, #3b6e9b 100%);
+        }
+
+        .market-cover.theme-violet {
+            background: linear-gradient(135deg, #e1ddff, #9d8cff 42%, #443c74 100%);
+        }
+
+        .market-cover.theme-mint {
+            background: linear-gradient(135deg, #dbffe8, #9bebc0 42%, #3f7055 100%);
+        }
+
+        .market-cover.theme-graphite {
+            background: linear-gradient(135deg, #808895, #454b55 42%, #1f2329 100%);
+        }
+
+        .market-cover.theme-candy {
+            background: linear-gradient(135deg, #ffe9fb, #ffb8e4 42%, #7a4570 100%);
+        }
+
+        .market-cover-content,
+        .market-cover-badge {
+            position: relative;
+            z-index: 1;
+        }
+
+        .market-cover-title {
+            margin-top: 10px;
+            font-weight: 800;
+            font-size: 1.12rem;
+            letter-spacing: 0.02em;
+            color: rgba(255, 255, 255, 0.96);
+            text-shadow: 0 18px 30px rgba(0, 0, 0, 0.48);
+        }
+
+        .market-cover-sub {
+            margin-top: 6px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.88rem;
+            line-height: 1.35;
+            text-shadow: 0 16px 26px rgba(0, 0, 0, 0.46);
+            max-width: 22ch;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .market-cover-badge {
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            background: rgba(23, 24, 27, 0.56);
+            color: #fff;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 18px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .market-body {
+            position: relative;
+            display: grid;
+            gap: 10px;
+            padding: 16px;
+            z-index: 1;
+        }
+
+        .market-desc {
+            display: grid;
+            gap: 6px;
+        }
+
+        .market-desc-title {
+            font-size: 0.72rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--muted-2);
+        }
+
+        .market-desc p {
+            margin: 0;
+            line-height: 1.55;
+            color: rgba(15, 23, 42, 0.88);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .market-roster {
+            font-size: 0.84rem;
+            color: var(--muted);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .avatar-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .avatar-row h3 {
+            margin: 0;
+            line-height: 1.25;
+        }
+
+        .avatar-row p {
+            margin: 3px 0 0;
+            color: var(--muted);
+            line-height: 1.35;
+        }
+
+        .avatar-badge {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            color: #111317;
+            background: linear-gradient(135deg, #f7f7f7, #c6ced8);
+        }
+
+        .avatar-photo {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.10);
+        }
+
+        .avatar-photo.square {
+            border-radius: 12px;
+        }
+
+        .market-card .avatar-row {
+            margin-top: 0;
+        }
+
+        .market-card .avatar-badge {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: radial-gradient(circle at 30% 20%, #ffffff, #cfe0ff 46%, #9db6ff 100%);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            box-shadow: 0 18px 34px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+        }
+
+        .market-card .avatar-photo {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            box-shadow: 0 18px 34px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+        }
+
+        .market-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .market-meta .chip {
+            font-size: 0.78rem;
+            padding: 6px 10px;
+        }
+
+        .market-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+
+        .market-foot > span {
+            flex: 1;
+            min-width: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .price-range-wrap {
+            display: grid;
+            gap: 10px;
+        }
+
+        .price-range-values {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #475569;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .price-range-track {
+            position: relative;
+            height: 38px;
+            display: grid;
+            align-items: center;
+        }
+
+        .price-range-track::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 6px;
+            border-radius: 999px;
+            background: #e2e8f0;
+        }
+
+        .price-range-fill {
+            position: absolute;
+            height: 6px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+            left: 0;
+            right: 0;
+            pointer-events: none;
+        }
+
+        .price-range-input {
+            position: absolute;
+            left: 0;
+            right: 0;
+            width: 100%;
+            margin: 0;
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            pointer-events: none;
+        }
+
+        .price-range-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid #2563eb;
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        .price-range-input::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid #2563eb;
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        .price-range-note {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+
+        .empty-state {
+            padding: 26px;
+            text-align: center;
+            border-radius: 16px;
+            color: var(--muted);
+            border: 1px dashed rgba(15, 23, 42, 0.14);
+            background: rgba(15, 23, 42, 0.02);
+        }
+
+        .chat-box {
+            display: grid;
+            gap: 10px;
+            max-height: 500px;
+            overflow: auto;
+        }
+
+        .message {
+            max-width: 82%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.03);
+            border: 1px solid rgba(15, 23, 42, 0.10);
+        }
+
+        .message.me {
+            margin-left: auto;
+            background: rgba(var(--accent-rgb), 0.12);
+            border-color: rgba(var(--accent-rgb), 0.18);
+        }
+
+        .message-meta {
+            display: block;
+            margin-top: 8px;
+            color: var(--muted-2);
+            font-size: 0.8rem;
+        }
+
+        .progress {
+            width: 100%;
+            height: 10px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.05);
+        }
+
+        .progress > span {
+            display: block;
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+        }
+
+        .table-wrap {
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 13px 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+        }
+
+        th {
+            color: var(--muted);
+            font-size: 0.82rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .footer-note {
+            margin-top: 4px;
+            color: var(--muted-2);
+            font-size: 0.84rem;
+            text-align: center;
+        }
+
+        @media (max-width: 1100px) {
+            .market-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .game-row,
+            .stats-row,
+            .grid.three,
+            .grid.four {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 920px) {
+            .app-shell {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+
+            .dock {
+                position: static;
+                height: auto;
+                width: 100%;
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-start;
+                padding: 12px;
+                overflow-x: auto;
+            }
+
+            .dock-group,
+            .dock-servers,
+            .dock-footer {
+                flex-direction: row;
+                width: auto;
+            }
+
+            .dock-servers {
+                flex: 1;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding-right: 0;
+            }
+
+            .dock-divider {
+                width: 1px;
+                height: 36px;
+            }
+
+            .dock-footer {
+                margin-top: 0;
+                margin-left: auto;
+            }
+
+            .workspace.has-sidebar,
+            .split,
+            .form-grid.two,
+            .grid.two,
+            .grid.three,
+            .grid.four,
+            .stats-row,
+            .game-row,
+            .market-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .workspace-sidebar {
+                border-right: 0;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .topbar-actions,
+            .topbar-left {
+                width: 100%;
+            }
+
+            .search-shell {
+                min-width: 0;
+            }
+        }
+    </style>
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    {% set endpoint = request.endpoint or '' %}
+    {% set sidebar_content %}{% block page_sidebar %}{% endblock %}{% endset %}
+    {% set sidebar_content = sidebar_content|trim %}
+    {% set active_store_slug = request.view_args.get('store_slug') if request.view_args else '' %}
+    {% set active_chat_partner = request.view_args.get('partner') if request.view_args else '' %}
+    <div class="app-shell">
+        <aside class="dock">
+            <div class="dock-group">
+                <a class="dock-link {% if endpoint in ['player_chats', 'booster_chats', 'merchant_chats', 'chat'] %}is-active{% endif %}" href="{{ url_for(dock_message_endpoint) }}" title="聊天" aria-label="聊天">
+                    <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                    </svg>
+                </a>
+                {% if not session.get('username') or session.get('role') == 'player' %}
+                    <a class="dock-link {% if endpoint in ['home', 'boosters_list', 'create_order'] %}is-active{% endif %}" href="{{ url_for('home') }}" title="发现" aria-label="发现">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                        </svg>
+                    </a>
+                {% endif %}
+                {% if session.get('role') in ['player', 'booster', 'merchant'] %}
+                    <a class="dock-link {% if endpoint == 'wallet' %}is-active{% endif %}" href="{{ url_for('wallet') }}" title="钱包" aria-label="钱包">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"></path>
+                            <path d="M16 12h6v4h-6a2 2 0 0 1 0-4z"></path>
+                        </svg>
+                    </a>
+                {% endif %}
+            </div>
+            <div class="dock-divider"></div>
+            <div class="dock-group dock-servers">
+                {% for server in dock_servers %}
+                    {% set is_own_merchant_store = session.get('role') == 'merchant' and server.owner_username == session.get('username') %}
+                    {% set server_href = url_for('merchant_home') if is_own_merchant_store else url_for('store_detail', store_slug=server.slug) %}
+                    {% set is_server_active = (endpoint == 'store_detail' and active_store_slug == server.slug) or (endpoint == 'chat' and active_chat_partner == server.owner_username) or (is_own_merchant_store and endpoint in ['merchant_home', 'merchant_store', 'merchant_talents']) %}
+                    <a class="dock-link server {% if is_server_active %}is-active{% endif %}" href="{{ server_href }}" title="{{ server.name }}">
+                        {% if server.logo_url %}
+                            <img src="{{ server.logo_url }}" alt="{{ server.name }}">
+                        {% else %}
+                            <span class="dock-label">{{ server.logo_text }}</span>
+                        {% endif %}
+                    </a>
+                {% endfor %}
+            </div>
+            <div class="dock-footer">
+                {% if session.get('username') %}
+                    {% if show_booster_store_apply_shortcut %}
+                        <a class="dock-link is-ghost {% if endpoint == 'booster_apply_store' %}is-active{% endif %}" href="{{ url_for('booster_apply_store') }}" title="返回入驻申请" aria-label="返回入驻申请">
+                            <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M19 12H5"></path>
+                                <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                        </a>
+                    {% endif %}
+                    <div class="dock-profile" title="{{ session.get('username') }}">{{ (session.get('username') or 'G')[0]|upper }}</div>
+                    <a class="dock-link is-ghost" href="{{ url_for('logout') }}" title="退出" aria-label="退出">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </a>
+                {% else %}
+                    <a class="dock-link is-ghost" href="{{ url_for('login') }}" title="登录" aria-label="登录">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v4"></path>
+                            <path d="M10 17l5-5-5-5"></path>
+                            <line x1="15" y1="12" x2="3" y2="12"></line>
+                            <path d="M15 21h4a2 2 0 0 0 2-2v-4"></path>
+                        </svg>
+                    </a>
+                {% endif %}
+            </div>
+            <a class="dock-brand" href="{{ url_for('home') }}">GB</a>
+            <div class="dock-stack">
+                {% if not session.get('username') or session.get('role') == 'player' %}
+                    <a class="dock-link {% if endpoint == 'home' %}is-active{% endif %}" href="{{ url_for('home') }}" title="首页" aria-label="首页">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M3 9l9-7 9 7"></path>
+                            <path d="M9 22V12h6v10"></path>
+                        </svg>
+                    </a>
+                    <a class="dock-link {% if endpoint in ['boosters_list', 'create_order'] %}is-active{% endif %}" href="{{ url_for('boosters_list') }}" title="发现" aria-label="发现">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                    </a>
+                {% endif %}
+                {% if session.get('role') == 'player' %}
+                    <a class="dock-link {% if endpoint in ['player_home', 'player_orders'] %}is-active{% endif %}" href="{{ url_for('player_home') }}" title="玩家面板" aria-label="玩家面板">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </a>
+                    <a class="dock-link {% if endpoint in ['player_chats', 'chat'] %}is-active{% endif %}" href="{{ url_for('player_chats') }}" title="聊天" aria-label="聊天">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                        </svg>
+                    </a>
+                    <a class="dock-link {% if endpoint == 'wallet' %}is-active{% endif %}" href="{{ url_for('wallet') }}" title="钱包" aria-label="钱包">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"></path>
+                            <path d="M16 12h6v4h-6a2 2 0 0 1 0-4z"></path>
+                        </svg>
+                    </a>
+                {% elif session.get('role') == 'booster' %}
+                    <a class="dock-link {% if endpoint in ['booster_home', 'booster_orders', 'booster_profile'] %}is-active{% endif %}" href="{{ url_for('booster_home') }}" title="陪玩面板" aria-label="陪玩面板">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                            <path d="M21 19a2 2 0 0 1-2 2h-1v-7h1a2 2 0 0 1 2 2z"></path>
+                            <path d="M3 19a2 2 0 0 0 2 2h1v-7H5a2 2 0 0 0-2 2z"></path>
+                        </svg>
+                    </a>
+                    <a class="dock-link {% if endpoint in ['booster_chats', 'chat'] %}is-active{% endif %}" href="{{ url_for('booster_chats') }}" title="聊天" aria-label="聊天">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                        </svg>
+                    </a>
+                    <a class="dock-link {% if endpoint == 'wallet' %}is-active{% endif %}" href="{{ url_for('wallet') }}" title="钱包" aria-label="钱包">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"></path>
+                            <path d="M16 12h6v4h-6a2 2 0 0 1 0-4z"></path>
+                        </svg>
+                    </a>
+                {% elif session.get('role') == 'merchant' %}
+                    <a class="dock-link {% if endpoint in ['merchant_home', 'merchant_store', 'merchant_talents'] %}is-active{% endif %}" href="{{ url_for('merchant_home') }}" title="商家后台" aria-label="商家后台">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path>
+                        </svg>
+                    </a>
+                    <a class="dock-link {% if endpoint == 'wallet' %}is-active{% endif %}" href="{{ url_for('wallet') }}" title="钱包" aria-label="钱包">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"></path>
+                            <path d="M16 12h6v4h-6a2 2 0 0 1 0-4z"></path>
+                        </svg>
+                    </a>
+                {% elif session.get('role') == 'admin' %}
+                    <a class="dock-link {% if endpoint in ['admin_home', 'admin_orders', 'admin_users', 'admin_send_notification'] %}is-active{% endif %}" href="{{ url_for('admin_home') }}" title="后台" aria-label="后台">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </a>
+                {% endif %}
+                {% if session.get('username') %}
+                    <a class="dock-link is-accent" href="{{ url_for('logout') }}" title="退出" aria-label="退出">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                    </a>
+                {% else %}
+                    <a class="dock-link is-accent" href="{{ url_for('login') }}" title="登录" aria-label="登录">
+                        <svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v4"></path>
+                            <path d="M10 17l5-5-5-5"></path>
+                            <line x1="15" y1="12" x2="3" y2="12"></line>
+                            <path d="M15 21h4a2 2 0 0 0 2-2v-4"></path>
+                        </svg>
+                    </a>
+                {% endif %}
+            </div>
+            <div class="dock-profile">{{ (session.get('username') or 'G')[0]|upper }}</div>
+        </aside>
+
+        <div class="app-frame">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <div>
+                        <div class="topbar-title">GameBuddy</div>
+                        <div class="topbar-subtitle">电竞陪玩 / 陪练 / 组队开黑平台</div>
+                    </div>
+                    {% block topbar_search %}{% endblock %}
+                </div>
+                <div class="topbar-actions">
+                    {% if session.get('username') %}
+                        <span class="chip is-active">{{ role_label(session.get('role')) }} · {{ session.get('username') }}</span>
+                    {% else %}
+                        <a class="button-link secondary" href="{{ url_for('register') }}">注册</a>
+                        <a class="button-link" href="{{ url_for('login') }}">登录</a>
+                    {% endif %}
+                </div>
+            </header>
+
+            <div class="workspace {% if sidebar_content %}has-sidebar{% endif %}">
+                {% if sidebar_content %}
+                    <aside class="workspace-sidebar">
+                        {{ sidebar_content }}
+                    </aside>
+                {% endif %}
+                <main class="workspace-main">
+                    <div class="page">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                <div class="flash-stack">
+                                    {% for category, message in messages %}
+                                        <div class="flash {{ category if category else 'info' }}">{{ message }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                        {% block content %}{% endblock %}
+                        <div class="footer-note">GameBuddy · 店铺入驻、认证陪玩、组队开黑与高质量陪练服务平台</div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+    <script>
+        (() => {
+            const ranges = document.querySelectorAll("[data-price-range]");
+            if (!ranges.length) {
+                return;
+            }
+
+            ranges.forEach((range) => {
+                const minInput = range.querySelector("[data-price-min-input]");
+                const maxInput = range.querySelector("[data-price-max-input]");
+                const minLabel = range.querySelector("[data-price-min-label]");
+                const maxLabel = range.querySelector("[data-price-max-label]");
+                const fill = range.querySelector("[data-price-fill]");
+                if (!minInput || !maxInput || !minLabel || !maxLabel || !fill) {
+                    return;
+                }
+
+                const minLimit = Number(minInput.min || 0);
+                const maxLimit = Number(minInput.max || 0);
+
+                const sync = (source) => {
+                    let minVal = Number(minInput.value || minLimit);
+                    let maxVal = Number(maxInput.value || maxLimit);
+
+                    if (source === "min" && minVal > maxVal) {
+                        maxVal = minVal;
+                        maxInput.value = String(maxVal);
+                    }
+                    if (source === "max" && maxVal < minVal) {
+                        minVal = maxVal;
+                        minInput.value = String(minVal);
+                    }
+
+                    minLabel.textContent = `¥${minVal}`;
+                    maxLabel.textContent = `¥${maxVal}`;
+
+                    const span = Math.max(maxLimit - minLimit, 1);
+                    const left = ((minVal - minLimit) / span) * 100;
+                    const right = ((maxVal - minLimit) / span) * 100;
+                    fill.style.left = `${left}%`;
+                    fill.style.right = `${100 - right}%`;
+                };
+
+                minInput.addEventListener("input", () => sync("min"));
+                maxInput.addEventListener("input", () => sync("max"));
+                sync("init");
+            });
+        })();
+    </script>
+</body>
+</html>

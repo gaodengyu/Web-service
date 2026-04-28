@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}店铺资料 | GameBuddy{% endblock %}
+
+{% block page_sidebar %}
+    {% set active_page = 'merchant_store' %}
+    {% include '_merchant_sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">Store Profile</span>
+        <h1>{{ store.name if store else '创建你的陪玩店' }}</h1>
+        <p>店铺需要先完善资料，再提交管理员审核。只有通过合规审核的店铺才会出现在公开发现页和玩家的接待大厅选择里。</p>
+    </div>
+</section>
+
+{% if store %}
+    <div class="grid three" style="margin-top: 18px;">
+        <section class="surface stat-card"><span class="stat-label">审核状态</span><div class="stat-value">{{ store.review_label }}</div><p>{{ store.review_note or '完成资料后可以再次提交审核。' }}</p></section>
+        <section class="surface stat-card"><span class="stat-label">公开页</span><div class="stat-value">{{ '已上架' if store.is_public else '未上架' }}</div><p>通过审核后自动进入玩家发现页。</p></section>
+        <section class="surface stat-card"><span class="stat-label">店内陪玩师</span><div class="stat-value">{{ store.booster_count }}</div><p>陪玩师必须归属店铺，并由店铺提交审核。</p></section>
+    </div>
+{% endif %}
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>店铺资料</h2>
+        <span class="muted">支持保存草稿，也可以直接提交管理员审核</span>
+    </div>
+    <form method="post" enctype="multipart/form-data" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="form-grid two">
+            <div>
+                <label for="store_name">店铺名称</label>
+                <input id="store_name" name="name" value="{{ store.name if store else '' }}" placeholder="例如：星屿陪玩店" required>
+            </div>
+            <div>
+                <label for="store_slug">店铺地址</label>
+                <input id="store_slug" name="slug" value="{{ store.slug if store else '' }}" placeholder="例如：xingyu">
+            </div>
+        </div>
+        <div class="form-grid two">
+            <div>
+                <label for="store_tagline">一句话介绍</label>
+                <input id="store_tagline" name="tagline" value="{{ store.tagline if store else '' }}" placeholder="例如：接待大厅秒响应，店内统一派单">
+            </div>
+            <div>
+                <label for="store_games">主打游戏</label>
+                <input id="store_games" name="games" value="{{ store.games|join(',') if store else '' }}" placeholder="用逗号分隔，例如：英雄联盟,无畏契约">
+            </div>
+        </div>
+        <div class="form-grid two">
+            <div>
+                <label for="store_city">服务地区</label>
+                <input id="store_city" name="city" value="{{ store.city if store else '' }}" placeholder="例如：线上接单">
+            </div>
+            <div>
+                <label for="store_min_price">大厅起步价</label>
+                <input id="store_min_price" name="min_price" value="{{ store.min_price if store else '' }}" placeholder="例如：68">
+            </div>
+        </div>
+        <div class="form-grid two">
+            <div>
+                <label for="store_badge">店铺徽标文案</label>
+                <input id="store_badge" name="badge" value="{{ store.badge if store else '' }}" placeholder="例如：认证陪玩店">
+            </div>
+            <div>
+                <label for="store_contact_note">接待说明</label>
+                <input id="store_contact_note" name="contact_note" value="{{ store.contact_note if store else '' }}" placeholder="例如：接待大厅在线 / 统一派单">
+            </div>
+        </div>
+        <div class="form-grid two">
+            <div>
+                <label for="store_theme">店铺主题</label>
+                <select id="store_theme" name="theme">
+                    {% for theme_value, theme_label in theme_options %}
+                        <option value="{{ theme_value }}" {% if store and store.theme == theme_value %}selected{% endif %}>{{ theme_label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="store_logo">店铺 Logo</label>
+                <input id="store_logo" type="file" name="logo" accept=".png,.jpg,.jpeg,.webp,.gif">
+            </div>
+        </div>
+        <div>
+            <label for="store_cover">店铺封面</label>
+            <input id="store_cover" type="file" name="cover" accept=".png,.jpg,.jpeg,.webp,.gif">
+        </div>
+        <div>
+            <label for="store_description">店铺介绍</label>
+            <textarea id="store_description" name="description" placeholder="介绍你的接待风格、服务场景、店铺特色和管理方式">{{ store.description if store else '' }}</textarea>
+        </div>
+        <div class="button-row">
+            <button type="submit" name="action" value="save">保存资料</button>
+            <button type="submit" name="action" value="submit_for_review" class="success">提交管理员审核</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

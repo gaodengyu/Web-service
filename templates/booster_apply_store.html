@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}申请入驻店铺 | GameBuddy{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">申请入驻店铺</span>
+        <h1>选择你要申请入驻的店铺</h1>
+        <p>每次只能申请一个店铺，等待审核结果后可再次申请。</p>
+    </div>
+</section>
+<section class="surface" style="margin-top: 18px;">
+    {% if current_application %}
+        <div class="section-title">
+            <h2>当前申请</h2>
+        </div>
+        <div class="list">
+            <article class="list-item">
+                <div class="list-item-header">
+                    <strong>{{ current_application.store_name or '未选择店铺' }}</strong>
+                    <span class="muted">状态：{{ current_application.status }}</span>
+                </div>
+                <p>提交时间：{{ current_application.created_at }}</p>
+                {% if current_application.review_note %}
+                    <p>审核意见：{{ current_application.review_note }}</p>
+                {% endif %}
+            </article>
+        </div>
+        {% if current_application.status == 'rejected' %}
+            <form method="post" class="form-grid">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="form-grid one">
+                    <label for="store_id">选择店铺</label>
+                    <select id="store_id" name="store_id" required>
+                        <option value="">请选择店铺</option>
+                        {% for store in stores %}
+                            <option value="{{ store.id }}">{{ store.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="button-row">
+                    <button type="submit">重新申请</button>
+                </div>
+            </form>
+        {% else %}
+            <div class="muted">请等待当前申请审核结果。</div>
+        {% endif %}
+    {% else %}
+        <form method="post" class="form-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="form-grid one">
+                <label for="store_id">选择店铺</label>
+                <select id="store_id" name="store_id" required>
+                    <option value="">请选择店铺</option>
+                    {% for store in stores %}
+                        <option value="{{ store.id }}">{{ store.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="button-row">
+                <button type="submit">提交申请</button>
+            </div>
+        </form>
+    {% endif %}
+</section>
+{% endblock %}

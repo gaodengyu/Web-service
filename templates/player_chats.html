@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}消息中心 | GameBuddy{% endblock %}
+
+{% block page_sidebar %}
+<div class="sidebar-block">
+    <div class="sidebar-group">
+        <div class="sidebar-title">消息</div>
+        <a class="sidebar-link is-active" href="{{ url_for('player_chats') }}">全部会话 <span class="sidebar-badge">{{ chats|length }}</span></a>
+        <a class="sidebar-link" href="{{ url_for('player_orders') }}">我的订单</a>
+    </div>
+    <div class="sidebar-group">
+        <div class="sidebar-title">最近联系</div>
+        {% for chat in chats[:8] %}
+            <a class="sidebar-link" href="{{ url_for('chat', partner=chat.partner) }}">{{ chat.partner_label or chat.partner }}</a>
+        {% else %}
+            <span class="sidebar-chip">还没有联系人</span>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="surface">
+    <div class="section-title">
+        <h2>全部会话</h2>
+        <span class="muted">下单后的陪玩会话，以及你主动联系的陪玩店，都会出现在这里。</span>
+    </div>
+    {% if chats %}
+        <div class="list">
+            {% for chat in chats %}
+                <a class="list-item" href="{{ url_for('chat', partner=chat.partner) }}">
+                    <div class="list-item-header">
+                        <strong>{{ chat.partner_label or chat.partner }}</strong>
+                        <span class="muted">{{ chat.timestamp }}</span>
+                    </div>
+                    <p>{{ chat.last_message }}</p>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">先去发现页联系店铺，或者先预约一位陪玩师。</div>
+    {% endif %}
+</section>
+
+<section class="surface">
+    <div class="section-title">
+        <h2>平台通知</h2>
+    </div>
+    <div class="list">
+        {% for notif in notifications %}
+            <article class="list-item">
+                <div class="list-item-header">
+                    <strong>{{ notif.sender }}</strong>
+                    <span class="muted">{{ notif.timestamp }}</span>
+                </div>
+                <p>{{ notif.message }}</p>
+            </article>
+        {% else %}
+            <div class="empty-state">还没有新的平台通知。</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

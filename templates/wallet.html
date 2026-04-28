@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}巴迪币钱包 | GameBuddy{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">Buddy Coin Wallet</span>
+        <h1>巴迪币钱包</h1>
+        <p>充值比例：1 真实货币单位 = {{ coin_to_cash_rate }} 巴迪币。提现比例：1 巴迪币 = {{ withdraw_rate }} 真实货币单位。</p>
+    </div>
+</section>
+
+<div class="grid three" style="margin-top: 18px;">
+    <section class="surface stat-card">
+        <span class="stat-label">总余额</span>
+        <div class="stat-value">{{ wallet.balance }}</div>
+        <p>巴迪币</p>
+    </section>
+    <section class="surface stat-card">
+        <span class="stat-label">锁定金额</span>
+        <div class="stat-value">{{ wallet.locked }}</div>
+        <p>巴迪币</p>
+    </section>
+    <section class="surface stat-card">
+        <span class="stat-label">可用金额</span>
+        <div class="stat-value">{{ wallet.available }}</div>
+        <p>巴迪币</p>
+    </section>
+</div>
+
+<div class="split" style="margin-top: 18px;">
+    {% if role == 'player' %}
+    <section class="surface">
+        <div class="section-title">
+            <h2>玩家充值</h2>
+        </div>
+        <form method="post" class="form-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="action" value="recharge">
+            <div>
+                <label for="recharge_amount">充值金额（巴迪币）</label>
+                <input id="recharge_amount" type="number" name="amount" min="1" step="1" placeholder="例如：100" required>
+            </div>
+            <div class="button-row">
+                <button type="submit">确认充值</button>
+            </div>
+        </form>
+    </section>
+    {% else %}
+    <section class="surface">
+        <div class="section-title">
+            <h2>提现</h2>
+            <span class="muted">店铺/打手可提现，平台按 {{ withdraw_rate }} 比例支付</span>
+        </div>
+        <form method="post" class="form-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="action" value="withdraw">
+            <div>
+                <label for="withdraw_amount">提现金额（巴迪币）</label>
+                <input id="withdraw_amount" type="number" name="amount" min="1" step="1" placeholder="例如：100" required>
+            </div>
+            <div class="button-row">
+                <button type="submit">提交提现</button>
+            </div>
+        </form>
+    </section>
+    {% endif %}
+
+    <section class="surface">
+        <div class="section-title">
+            <h2>规则说明</h2>
+        </div>
+        <div class="list">
+            <article class="list-item">
+                <p>玩家下单时，系统会直接扣除巴迪币并支付给店铺。</p>
+            </article>
+            <article class="list-item">
+                <p>订单完成后，系统自动将订单金额的 {{ share_rate * 100 }}% 分账给对应打手。</p>
+            </article>
+            <article class="list-item">
+                <p>提现由平台支付，按 1 巴迪币 = {{ withdraw_rate }} 真实货币单位结算。</p>
+            </article>
+        </div>
+    </section>
+</div>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>交易记录</h2>
+    </div>
+    <div class="list">
+        {% for tx in transactions %}
+            <article class="list-item">
+                <div class="list-item-header">
+                    <div>
+                        <h3>{{ tx.tx_type }}</h3>
+                        <p class="muted">{{ tx.note or '无备注' }}</p>
+                    </div>
+                    <span class="badge {{ 'badge-soft-success' if tx.coin_amount >= 0 else 'badge-soft-danger' }}">{{ tx.coin_amount }}</span>
+                </div>
+                <p class="muted">时间：{{ tx.created_at }}{% if tx.related_order_id %} · 订单 #{{ tx.related_order_id }}{% endif %}</p>
+                {% if tx.cash_amount %}
+                    <p class="muted">现金折算：{{ tx.cash_amount }}</p>
+                {% endif %}
+            </article>
+        {% else %}
+            <div class="empty-state">暂无交易记录。</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

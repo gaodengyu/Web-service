@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}等待审核 | GameBuddy{% endblock %}
+
+{% block content %}
+<div class="page" style="display: flex; justify-content: center; align-items: center; min-height: 60vh;">
+    <div class="surface" style="text-align: center; padding: 40px; max-width: 500px; border-radius: var(--radius-lg); border: 1px solid var(--line);">
+        <div style="font-size: 4rem; color: var(--warning); margin-bottom: 20px;">
+            <i class="fa-solid fa-hourglass-half"></i>
+        </div>
+        <h2>入驻审核中</h2>
+        <p class="muted" style="margin-top: 16px; line-height: 1.6;">
+            亲爱的 <strong style="color: var(--text);">{{ session.username }}</strong>，您申请成为 
+            <strong>{% if session.role == 'booster' %}陪玩师{% else %}商家{% endif %}</strong> 
+            的资料已提交成功！
+        </p>
+        <p class="muted" style="margin-bottom: 30px;">
+            系统管理员正在快马加鞭地审核您的资质，预计需要 1-2 个工作日。审核通过后，您即可接单赚钱！
+        </p>
+        <div style="display: flex; gap: 16px; justify-content: center;">
+            <a href="{{ url_for('auth.logout') }}" class="button-link secondary">
+                退出登录
+            </a>
+            <a href="{{ url_for('main.home') }}" class="button-link">
+                先去首页逛逛
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

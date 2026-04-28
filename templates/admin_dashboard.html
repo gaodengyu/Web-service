@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}管理总览 | GameBuddy{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">Admin Console</span>
+        <h1>从管理视角演示平台运营、投诉与质量控制</h1>
+        <p>这里集中查看平台核心指标、争议订单、用户风险和整体运营健康度。</p>
+        <div class="cta-row">
+            <a class="button-link" href="{{ url_for('admin_orders') }}">去处理订单与投诉</a>
+            <a class="button-link secondary" href="{{ url_for('admin_users') }}">去管理账号</a>
+        </div>
+    </div>
+</section>
+
+<div class="grid three" style="margin-top: 18px;">
+    <section class="surface stat-card"><span class="stat-label">总用户</span><div class="stat-value">{{ stats.users_count }}</div><p>玩家 {{ stats.players_count }} / 打手 {{ stats.boosters_count }}</p></section>
+    <section class="surface stat-card"><span class="stat-label">订单转化</span><div class="stat-value">{{ stats.conversion_rate }}%</div><p>已完成订单 {{ stats.completed_orders_count }} / 总订单 {{ stats.orders_count }}</p></section>
+    <section class="surface stat-card"><span class="stat-label">待处理投诉</span><div class="stat-value">{{ stats.pending_complaints_count }}</div><p>当前仍需要管理员介入的争议单。</p></section>
+</div>
+
+<div class="split" style="margin-top: 18px;">
+    <section class="surface">
+        <div class="section-title">
+            <h2>推荐表现最好的打手</h2>
+        </div>
+        {% if top_boosters %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>打手</th>
+                            <th>游戏</th>
+                            <th>评分</th>
+                            <th>完成单</th>
+                            <th>价格</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booster in top_boosters %}
+                            <tr>
+                                <td>{{ booster.username }}</td>
+                                <td>{{ booster.profile.games or '待补充' }}</td>
+                                <td>{{ booster.stats.avg_rating or '新' }}</td>
+                                <td>{{ booster.stats.completed_orders }}</td>
+                                <td>¥{{ booster.profile.price or '--' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">还没有足够数据用于展示排行。</div>
+        {% endif %}
+    </section>
+    <section class="surface">
+        <div class="section-title">
+            <h2>最新投诉</h2>
+        </div>
+        <div class="list">
+            {% for order in complaints %}
+                <article class="list-item">
+                    <div class="list-item-header">
+                        <div>
+                            <h3>#{{ order.id }} · {{ order.player }} → {{ order.booster }}</h3>
+                            <p>{{ order.game }} / {{ order.service_type or '标准服务' }}</p>
+                        </div>
+                        <span class="badge {{ complaint_status_class(order.complaint_status) }}">{{ order.complaint_status }}</span>
+                    </div>
+                    <p>{{ order.complaint }}</p>
+                </article>
+            {% else %}
+                <div class="empty-state">当前没有投诉单，平台状态良好。</div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<section class="surface" style="margin-top: 18px;">
+    <div class="section-title">
+        <h2>最近订单</h2>
+    </div>
+    {% if recent_orders %}
+        <div class="list">
+            {% for order in recent_orders %}
+                <article class="list-item">
+                    <div class="list-item-header">
+                        <div>
+                            <h3>#{{ order.id }} · {{ order.player }} → {{ order.booster }}</h3>
+                            <p>{{ order.game }} / {{ order.service_type or '标准服务' }}</p>
+                        </div>
+                        <div class="pill-row">
+                            <span class="badge {{ order_status_class(order.status) }}">{{ order.status }}</span>
+                            <span class="badge {{ payment_status_class(order.payment_status) }}">{{ order.payment_status }}</span>
+                        </div>
+                    </div>
+                    <p>{{ order.detail }}</p>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">还没有任何订单数据。</div>
+    {% endif %}
+</section>
+{% endblock %}
